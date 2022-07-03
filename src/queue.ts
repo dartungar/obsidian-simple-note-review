@@ -17,15 +17,47 @@ export class Queue {
     public openNextFile(): void {
         const filePath = this.getNextFilePath();
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
-        this._app.workspace.getLeaf().openFile(abstractFile as TFile); // TODO: check if coercion works
+        this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
 
-    public getNextFilePath(): string {
+    public async setMetadataValueToToday(): Promise<void> {
+        await this.changeOrAddMetadataValue("2022-03-07");
+    }
+
+    // TODO: maybe it's better to store queue in memory, if DataView is not fast enough
+    // TODO: make async
+    private getNextFilePath(): string {
         const pages = this._api.pages(this.createQuery());
         console.log("found pages:", pages.array.length);
-        const sorted = pages.sort(x => x[this.fieldName], "asc"); // TODO: return path
+        const sorted = pages.sort(x => x[this.fieldName], "asc"); // TODO: filed without field come first - check default behavior
         console.log(sorted[0]);
-        return sorted.array()[0]["file"]["path"]; // TODO: 
+        return sorted.array()[0]["file"]["path"];
+    }
+
+    // TODO: validation
+    private async changeOrAddMetadataValue(newValue: string): Promise<void> {
+        const newFieldValue = `${this.fieldName}: ${newValue}`;
+        const currentFile = this._app.workspace.getActiveFile();
+        const fileContentSplit = await (await this._app.vault.read(currentFile)).split("\n");
+        const page = this._api.page(currentFile.path);
+        if (!page[this.fieldName]) {
+            if (fileContentSplit[0] !== "---") {
+                fileContentSplit.unshift("---");
+                fileContentSplit.unshift("---");
+            }
+            fileContentSplit.splice(1, 0, newFieldValue);
+
+            await this._app.vault.modify(currentFile, fileContentSplit.join("\n"));
+            return;
+        } 
+
+        const newContent = fileContentSplit.map(line => {
+            if (!line.startsWith(this.fieldName)) return line; // TODO: precise matching
+            return newFieldValue;
+        });
+        await this._app.vault.modify(currentFile, newContent.join("\n"));
+
+        // TODO: show modal somewhere
     }
 
     private createQuery(): string {
