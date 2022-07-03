@@ -14,16 +14,21 @@ export class Queue {
         this.params = params;
      }
 
-    getNextFile(): void {
-        const pages = this._api.pages(this.createQuery());
-        console.log("found pages:", pages.array.length);
-        const sorted = pages.sort(x => x[this.fieldName], "desc"); // TODO: check if query works
-        const first = sorted.array()[0];
-        console.log(first);
-        this._app.workspace.getLeaf().openFile(new TFile())
+    public openNextFile(): void {
+        const filePath = this.getNextFilePath();
+        const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
+        this._app.workspace.getLeaf().openFile(abstractFile as TFile); // TODO: check if coercion works
     }
 
-    createQuery(): string {
+    public getNextFilePath(): string {
+        const pages = this._api.pages(this.createQuery());
+        console.log("found pages:", pages.array.length);
+        const sorted = pages.sort(x => x[this.fieldName], "asc"); // TODO: return path
+        console.log(sorted[0]);
+        return sorted.array()[0]["file"]["path"]; // TODO: 
+    }
+
+    private createQuery(): string {
         // TODO: handle absence of params - throw an error?
         let tags = "";
         let folders = "";
