@@ -21,7 +21,7 @@ export default class MyPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			const queue = new Queue(new EmptyQueueParams, this.app, "reviewed");
+			const queue = new Queue("defaultQueue", new EmptyQueueParams, this.app, "reviewed");
 			queue.getNextFile();
 		});
 		// Perform additional things with the ribbon
