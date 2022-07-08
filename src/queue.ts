@@ -14,27 +14,29 @@ export class Queue {
         this.params = params;
      }
 
+    // open next fine in queue
     public openNextFile(): void {
         const filePath = this.getNextFilePath();
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
 
+    // TODO
     public async setMetadataValueToToday(): Promise<void> {
-        await this.changeOrAddMetadataValue("2022-03-07");
+        const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
+        await this.changeOrAddMetadataValue(todayString);
     }
 
     // TODO: maybe it's better to store queue in memory, if DataView is not fast enough
     // TODO: make async
     private getNextFilePath(): string {
-        const pages = this._api.pages(this.createQuery());
-        console.log("found pages:", pages.array.length);
+        const pages = this._api.pages(this.createQueryString());
         const sorted = pages.sort(x => x[this.fieldName], "asc"); // TODO: filed without field come first - check default behavior
-        console.log(sorted[0]);
         return sorted.array()[0]["file"]["path"];
     }
 
     // TODO: validation
+    // TODO: check if async works / is really needed
     private async changeOrAddMetadataValue(newValue: string): Promise<void> {
         const newFieldValue = `${this.fieldName}: ${newValue}`;
         const currentFile = this._app.workspace.getActiveFile();
@@ -52,7 +54,7 @@ export class Queue {
         } 
 
         const newContent = fileContentSplit.map(line => {
-            if (!line.startsWith(this.fieldName)) return line; // TODO: precise matching
+            if (!line.startsWith(this.fieldName)) return line; // TODO: more precise matching
             return newFieldValue;
         });
         await this._app.vault.modify(currentFile, newContent.join("\n"));
@@ -60,7 +62,7 @@ export class Queue {
         // TODO: show modal somewhere
     }
 
-    private createQuery(): string {
+    private createQueryString(): string {
         // TODO: handle absence of params - throw an error?
         let tags = "";
         let folders = "";
