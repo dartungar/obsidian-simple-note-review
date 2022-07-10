@@ -1,4 +1,23 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
+/* settings */
+.section-setting {
+	display: block;
+}
+
+.section-setting > .setting-item-control {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+}
+
+.section-setting > .setting-item-control > span {
+	margin-right: 5px;
+}
+
+.section-setting > .setting-item-control > input, .section-setting > .setting-item-control > textarea {
+	margin-right: 30px;
+}
+
+.section-setting textarea {
+	max-height: 200px;
 }
