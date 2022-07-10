@@ -1,11 +1,11 @@
-import { Queue } from "src/queue";
+import { IQueue } from "src/IQueue";
 
 export interface SimpleNoteReviewPluginSettings {
     fieldName: string
-    queues: Queue[]
+    queues: IQueue[]
 }
 
 export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     fieldName = "reviewed";
-    queues: Queue[] = [];
+    queues: IQueue[] = [];
 }

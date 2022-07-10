@@ -1,21 +1,18 @@
-import { IQueueParams } from "./IQeueParams";
+import { IQueue } from "./IQueue";
 import {getAPI} from "obsidian-dataview";
 import { App, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 
-export class Queue {
-    public params: IQueueParams;
+export class QueueService {
 
     private _api = getAPI();
 
     // TODO: expand param options
-    constructor(params: IQueueParams, private _app: App, private _plugin: SimpleNoteReviewPlugin) {
-        this.params = params;
-     }
+    constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
     // open next fine in queue
-    public openNextFile(): void {
-        const filePath = this.getNextFilePath();
+    public openNextFile(queue: IQueue): void {
+        const filePath = this.getNextFilePath(queue);
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
@@ -28,8 +25,8 @@ export class Queue {
 
     // TODO: maybe it's better to store queue in memory, if DataView is not fast enough
     // TODO: make async
-    private getNextFilePath(): string {
-        const pages = this._api.pages(this.params.dataviewQuery ?? this.createDataviewQuery());
+    private getNextFilePath(queue: IQueue): string {
+        const pages = this._api.pages(queue.dataviewQuery ?? this.createDataviewQuery(queue));
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc"); // TODO: files without field come first - check default behavior
         return sorted.array()[0]["file"]["path"];
     }
@@ -61,19 +58,19 @@ export class Queue {
         // TODO: show modal somewhere
     }
 
-    private createDataviewQuery(): string {
+    private createDataviewQuery(queue: IQueue): string {
         // TODO: handle absence of params - throw an error?
         let tags = "";
         let folders = "";
-        if (this.params.tags) {
-            tags = this.params.tags.map(p => {
+        if (queue.tags) {
+            tags = queue.tags.map(p => {
                 if (p[0] !== "#") return "#" + p;
                 return p;
             }).join(" or ");
         }
 
-        if (this.params.folders) {
-            folders = this.params.folders.join(" or ");
+        if (queue.folders) {
+            folders = queue.folders.join(" or ");
         }
 
         // TODO: switch for OR / AND

@@ -1,7 +1,6 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { EmptyQueueParams } from "src/IQeueParams";
-import { Queue } from "src/queue";
+import { EmptyQueue } from "src/IQueue";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
@@ -37,19 +36,19 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			setting.setClass("section-setting");
 
             setting.addText(textField => {
-				textField.setValue(queue.params.name)
+				textField.setValue(queue.name)
 				.setPlaceholder("Queue name")
 				.onChange(value => {
-					queue.params.name = value;
+					queue.name = value;
 					this._plugin.saveSettings;
 				})
 			});
 
             setting.addTextArea(textArea => {
-				textArea.setValue(queue.params.dataviewQuery)
+				textArea.setValue(queue.dataviewQuery)
 				.setPlaceholder("DataviewJS query")
 				.onChange(value => {
-					queue.params.dataviewQuery = value;
+					queue.dataviewQuery = value;
 					this._plugin.saveSettings;
 				});
 			});
@@ -58,7 +57,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				btn.setButtonText("Delete queue");
 				btn.onClick(() => {
 					//console.log(this._plugin.settings);
-					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.params.id !== queue.params.id);
+					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
 					this._plugin.saveSettings();
 					this.refresh();
 				});
@@ -70,10 +69,8 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			btn.setButtonText("Add queue");
 			btn.onClick(() => {
 				this._plugin.settings.queues.push(
-                    new Queue(
-                        new EmptyQueueParams(this._plugin.settings.queues.length > 0 ? Math.max(...this._plugin.settings.queues.map(q => q.params.id)) + 1 : 1), // id "generation"
-                        app, 
-                        this._plugin)
+                        new EmptyQueue(
+							this._plugin.settings.queues.length > 0 ? Math.max(...this._plugin.settings.queues.map(q => q.id)) + 1 : 1), // id "generation"
                     );
 				this._plugin.saveSettings();
 				this.refresh();

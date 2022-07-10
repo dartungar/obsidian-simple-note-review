@@ -1,6 +1,6 @@
 // TODO: frontmatter keys
 // TODO: excluded tags, folders, frontmatter keys
-export interface IQueueParams {
+export interface IQueue {
     id: number
     name: string
     tags: string[]
@@ -8,7 +8,7 @@ export interface IQueueParams {
     dataviewQuery: string
 }
 
-export class EmptyQueueParams implements IQueueParams {
+export class EmptyQueue implements IQueue {
     id: number
     name: ""
     tags: []
