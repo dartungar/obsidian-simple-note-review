@@ -1,7 +1,8 @@
 import { IQueue } from "./IQueue";
 import {getAPI} from "obsidian-dataview";
-import { App, TFile } from "obsidian";
+import { App, Notice, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
+
 
 export class QueueService {
 
@@ -27,8 +28,11 @@ export class QueueService {
     // TODO: make async
     private getNextFilePath(queue: IQueue): string {
         const pages = this._api.pages(queue.dataviewQuery ?? this.createDataviewQuery(queue));
-        const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc"); // TODO: files without field come first - check default behavior
-        return sorted.array()[0]["file"]["path"];
+        const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field come first - check default behavior
+        if (sorted.length > 0) {
+            return sorted[0]["file"]["path"];
+        };
+        throw new Error("Queue is empty");
     }
 
     // TODO: validation
