@@ -1,6 +1,6 @@
 import { IQueue } from "./IQueue";
 import {getAPI} from "obsidian-dataview";
-import { App, Notice, TFile } from "obsidian";
+import { App, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 
 
@@ -19,9 +19,9 @@ export class QueueService {
     }
 
     // TODO
-    public async setMetadataValueToToday(): Promise<void> {
+    public async setMetadataValueToToday(file: TFile): Promise<void> {
         const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
-        await this.changeOrAddMetadataValue(todayString);
+        await this.changeOrAddMetadataValue(file, todayString);
     }
 
     // TODO: maybe it's better to store queue in memory, if DataView is not fast enough
@@ -31,14 +31,14 @@ export class QueueService {
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field come first - check default behavior
         if (sorted.length > 0) {
             return sorted[0]["file"]["path"];
-        };
+        }
         throw new Error("Queue is empty");
     }
 
     // TODO: validation
     // TODO: check if async works / is really needed
-    private async changeOrAddMetadataValue(newValue: string): Promise<void> {
-        const newFieldValue = `${this._plugin.settings.fieldName}: ${newValue}`;
+    private async changeOrAddMetadataValue(file: TFile, value: string): Promise<void> {
+        const newFieldValue = `${this._plugin.settings.fieldName}: ${value}`;
         const currentFile = this._app.workspace.getActiveFile();
         const fileContentSplit = await (await this._app.vault.read(currentFile)).split("\n");
         const page = this._api.page(currentFile.path);
