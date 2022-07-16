@@ -39,11 +39,12 @@ export class QueueService {
     private getNextFilePath(queue: IQueue): string {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let pages: DataArray<Record<string, any>>;
-        const query = queue.dataviewQuery ?? this.getOrCreateDataviewQuery(queue);
+        const query = this.getOrCreateDataviewQuery(queue);
+        console.log("query:", query);
         try {
             pages = this._api.pages(query);
         } catch (error) {
-            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${queue.name}".`)
+            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
         }
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
         if (sorted.length > 0) {

@@ -11,11 +11,13 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
     }
 
     getSuggestions(query: string): IQueue[] | Promise<IQueue[]> {
+        this.setPlaceholder("Select a queue to start reviewing notes");
         return this._plugin.settings.queues.filter(
             q => {
+                if (query == "") return true;
                 const name = this._plugin.service.getQueueDisplayName(q);
                 return name != "" && name.toLowerCase().includes(query.toLowerCase());
-            } )
+            });
     }
 
     renderSuggestion(queue: IQueue, el: HTMLElement) {
