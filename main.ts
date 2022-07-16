@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Plugin, TFile } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { QueueService } from 'src/queueService';
 import { SelectQueueModal } from 'src/selectQueueModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
@@ -86,5 +86,9 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	public showNotice(message: string) : void {
+		new Notice(message);
 	}
 }

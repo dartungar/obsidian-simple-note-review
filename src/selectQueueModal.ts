@@ -1,5 +1,5 @@
 import SimpleNoteReviewPlugin from "main";
-import { App, Notice, SuggestModal } from "obsidian";
+import { App, SuggestModal } from "obsidian";
 import { IQueue } from "./IQueue";
 
 export class SelectQueueModal extends SuggestModal<IQueue> {
@@ -25,7 +25,7 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
             this._plugin.saveSettings();
             this._plugin.service.openNextFile(queue);
         } catch (error) {
-            new Notice(error.message);
+            this._plugin.showNotice(error.message);
             this.open();
         } 
     }  

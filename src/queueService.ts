@@ -1,8 +1,13 @@
 import { IQueue } from "./IQueue";
-import {getAPI} from "obsidian-dataview";
+import {DataArray, getAPI} from "obsidian-dataview";
 import { App, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 
+export class QueueEmptyError extends Error {
+    message = "Queue is empty";
+}
+
+export class DataviewQueryError extends Error { }
 
 export class QueueService {
 
@@ -22,17 +27,28 @@ export class QueueService {
     public async setMetadataValueToToday(file: TFile): Promise<void> {
         const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
         await this.changeOrAddMetadataValue(file, todayString);
+        this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
     private getNextFilePath(queue: IQueue): string {
-        const pages = this._api.pages(queue.dataviewQuery ?? this.createDataviewQuery(queue));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let pages: DataArray<Record<string, any>>;
+        const query = queue.dataviewQuery ?? this.createDataviewQuery(queue);
+        try {
+            pages = this._api.pages(query);
+        } catch (error) {
+            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${queue.name}".`)
+        }
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
-        if (sorted.length > 1) {
+        if (sorted.length > 0) {
             const firstInQueue = sorted[0]["file"]["path"];
+            if (sorted.length === 1) {
+                return firstInQueue;
+            }
             const nextInQueue = sorted[1]["file"]["path"];
             return this.pathEqualsCurrentFilePath(firstInQueue) ? nextInQueue : firstInQueue;
-        }
-        throw new Error("Queue is empty");
+        } 
+        throw new QueueEmptyError();
     }
 
     private pathEqualsCurrentFilePath(path: string): boolean {

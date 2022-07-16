@@ -35,6 +35,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			setting.setClass("section-setting");
 
+			setting.addExtraButton(cb => {
+				cb.setTooltip("Advanced")
+			});
+
             setting.addText(textField => {
 				textField.setValue(queue.name)
 				.setPlaceholder("Queue name")
