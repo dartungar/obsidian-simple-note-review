@@ -21,6 +21,8 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
 
     onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {
         try {
+            this._plugin.settings.currentQueue = queue;
+            this._plugin.saveSettings();
             this._plugin.service.openNextFile(queue);
         } catch (error) {
             new Notice(error.message);

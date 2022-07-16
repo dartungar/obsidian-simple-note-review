@@ -29,7 +29,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "simple-note-review-set-reviewed-date",
 			name: "Mark Note As Reviewed Today",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				this.service.setMetadataValueToToday(view.file);
+				this.service.setMetadataValueToToday(view.file).then(() => {
+					if (this.settings.currentQueue) {
+						this.service.openNextFile(this.settings.currentQueue);
+					}
+				});
 			},
 		});
 
@@ -40,7 +44,26 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 					.setTitle("Mark Note As Reviewed Today")
 					.setIcon(this.markAsReviewedIconName)
 					.onClick(async () => {
-						this.service.setMetadataValueToToday(view.file); 
+						await this.service.setMetadataValueToToday(view.file); 
+						if (this.settings.currentQueue) {
+							this.service.openNextFile(this.settings.currentQueue);
+						}
+					});
+				});
+			})
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file) => {
+				menu.addItem((item) => {
+					item
+					.setTitle("Mark Note As Reviewed Today")
+					.setIcon(this.markAsReviewedIconName)
+					.onClick(async () => {
+						await this.service.setMetadataValueToToday(file as TFile); 
+						if (this.settings.currentQueue) {
+							this.service.openNextFile(this.settings.currentQueue);
+						}
 					});
 				});
 			})

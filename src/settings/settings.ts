@@ -40,7 +40,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.setPlaceholder("Queue name")
 				.onChange(value => {
 					queue.name = value;
-					this._plugin.saveSettings;
+					this._plugin.saveSettings();
 				})
 			});
 
@@ -49,7 +49,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.setPlaceholder("DataviewJS query")
 				.onChange(value => {
 					queue.dataviewQuery = value;
-					this._plugin.saveSettings;
+					this._plugin.saveSettings();
 				});
 			});
 
