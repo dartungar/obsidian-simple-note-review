@@ -30,10 +30,16 @@ export class QueueService {
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
+    public getQueueDisplayName(queue: IQueue): string {
+        return queue.name && queue.name != "" 
+            ? queue.name 
+            : this.getOrCreateDataviewQuery(queue);
+    }
+
     private getNextFilePath(queue: IQueue): string {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let pages: DataArray<Record<string, any>>;
-        const query = queue.dataviewQuery ?? this.createDataviewQuery(queue);
+        const query = queue.dataviewQuery ?? this.getOrCreateDataviewQuery(queue);
         try {
             pages = this._api.pages(query);
         } catch (error) {
@@ -81,7 +87,10 @@ export class QueueService {
         // TODO: show modal somewhere
     }
 
-    private createDataviewQuery(queue: IQueue): string {
+    private getOrCreateDataviewQuery(queue: IQueue): string {
+        if (queue.dataviewQuery != "") 
+            return queue.dataviewQuery;
+        
         // TODO: handle absence of params - throw an error?
         let tags = "";
         let folders = "";

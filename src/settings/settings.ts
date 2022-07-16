@@ -31,41 +31,93 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
         this._plugin.settings 
 		&& this._plugin.settings.queues
 		&& this._plugin.settings.queues.forEach(queue => {
-            const setting = new Setting(containerEl);
+			// Header
+            const baseSetting = new Setting(containerEl);
+			const nameOnInit = this._plugin.service.getQueueDisplayName(queue);
 
-			setting.setClass("section-setting");
+			baseSetting.setHeading();
+			baseSetting.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "New queue");
+			baseSetting.addExtraButton(cb => {
+				cb.setIcon("trash")
+				.setTooltip("Delete queue")
+				.onClick(async () => {
+					//console.log(this._plugin.settings);
+					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
+					await this._plugin.saveSettings();
+					this.refresh();
+				})
+			})
 
-			setting.addExtraButton(cb => {
-				cb.setTooltip("Advanced")
-			});
-
-            setting.addText(textField => {
+			//setting.setClass("section-setting");
+			const nameSetting = new Setting(containerEl);
+			nameSetting.setName("Name");
+			nameSetting.setDesc("If omitted, name will be created from tags/folders")
+            nameSetting.addText(textField => {
 				textField.setValue(queue.name)
-				.setPlaceholder("Queue name")
+				.setPlaceholder(this._plugin.service.getQueueDisplayName(queue))
 				.onChange(value => {
 					queue.name = value;
 					this._plugin.saveSettings();
+					if (value == "") {
+						textField.setPlaceholder(this._plugin.service.getQueueDisplayName(queue));
+					}
 				})
 			});
 
-            setting.addTextArea(textArea => {
+			const tagsSetting = new Setting(containerEl);
+			tagsSetting.setName("Tags");
+			tagsSetting.setDesc(`One or more tags, separated by comma. Queue will contain notes tagged with any of these. Example: #review, #knowledge`)
+			tagsSetting.addTextArea(textArea => {
+				textArea.setValue(queue.tags ? queue.tags.join(",") : "")
+				.setPlaceholder("Tags")
+				.onChange(value => {
+					queue.tags = value.split(',').map(f => f.trim());
+					this._plugin.saveSettings();
+				});
+			});
+
+			const foldersSetting = new Setting(containerEl);
+			foldersSetting.setName("Folders");
+			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Queue will contain notes located in any of these. Example: "/notes", "/programming"`)			
+			foldersSetting.addTextArea(textArea => {
+				textArea.setValue(queue.folders ? queue.folders.join(',') : "")
+				.setPlaceholder("Folders")
+				.onChange(value => {
+					queue.folders = value.split(',').map(f => f.trim());
+					this._plugin.saveSettings();
+				});
+			});
+			
+			const dataviewQuerySetting = new Setting(containerEl);
+			dataviewQuerySetting.setName("DataviewJS query");
+			dataviewQuerySetting.setDesc(`DataviewJS-style query. If used, overrides Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
+            dataviewQuerySetting.addTextArea(textArea => {
 				textArea.setValue(queue.dataviewQuery)
 				.setPlaceholder("DataviewJS query")
 				.onChange(value => {
 					queue.dataviewQuery = value;
 					this._plugin.saveSettings();
+					// TODO: debounce
+					updateTagsFoldersSettingsAvailability(value);
 				});
 			});
 
-            setting.addButton(btn => {
-				btn.setButtonText("Delete queue");
-				btn.onClick(() => {
-					//console.log(this._plugin.settings);
-					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
-					this._plugin.saveSettings();
-					this.refresh();
-				});
-			})
+			
+
+			const updateTagsFoldersSettingsAvailability = (dataviewJsQueryValue: string) : void => {
+				const disableTagsFoldersSettings = dataviewJsQueryValue && (dataviewJsQueryValue != "");
+				if (disableTagsFoldersSettings) {
+					tagsSetting.settingEl.style.opacity = "50%";
+					foldersSetting.settingEl.style.opacity = "50%";
+				} else {
+					tagsSetting.settingEl.style.opacity = "100%";
+					foldersSetting.settingEl.style.opacity = "100%";
+				}
+				tagsSetting.setDisabled(disableTagsFoldersSettings);
+				foldersSetting.setDisabled(disableTagsFoldersSettings);
+			}
+
+			updateTagsFoldersSettingsAvailability(queue.dataviewQuery);
         })
 
         new Setting(containerEl)
@@ -80,6 +132,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				this.refresh();
 				console.log(this._plugin.settings);
 			});
-		})
+		});
+
+
     }
+
+
 }

@@ -12,11 +12,14 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
 
     getSuggestions(query: string): IQueue[] | Promise<IQueue[]> {
         return this._plugin.settings.queues.filter(
-            q => q.name && q.name.toLowerCase().includes(query.toLowerCase()))
+            q => {
+                const name = this._plugin.service.getQueueDisplayName(q);
+                return name != "" && name.toLowerCase().includes(query.toLowerCase());
+            } )
     }
 
     renderSuggestion(queue: IQueue, el: HTMLElement) {
-        el.createDiv({text: queue.name});
+        el.createDiv({text: this._plugin.service.getQueueDisplayName(queue)});
     }
 
     onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {
