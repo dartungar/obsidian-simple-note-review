@@ -1,6 +1,6 @@
 import { IQueue } from "./IQueue";
 import {DataArray, getAPI} from "obsidian-dataview";
-import { App, TFile } from "obsidian";
+import { App, TAbstractFile, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { JoinLogicOperators } from "../joinLogicOperators";
 
@@ -12,23 +12,47 @@ export class DataviewQueryError extends Error { }
 
 export class QueueService {
 
-    private _api = getAPI();
+    private _dataviewApi = getAPI();
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
-    // open next fine in queue
-    public openNextFile(queue: IQueue): void {
-        const filePath = this.getNextFilePath(queue);
-        const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
-        this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
+    /** Mark note as reviewed today. If setting "open next note in queue after reviewing" is enabled,
+     * open next note in queue (current queue by default).
+     * @param  {TAbstractFile} note
+     * @param  {IQueue=this._plugin.settings.currentQueue} queue
+     * @returns Promise
+     */
+    public async reviewNote(note: TAbstractFile, queue: IQueue = this._plugin.settings.currentQueue): Promise<void> {
+        await this.setMetadataValueToToday(note as TFile);
+        if (this._plugin.settings.openNextNoteAfterReviewing) {
+            await this.openNextFile(queue);
+        }
     }
 
+    /** Open next file in queue.
+     * @param  {IQueue} queue
+     * @returns Promise
+     */
+    public async openNextFile(queue: IQueue): Promise<void> {
+        const filePath = this.getNextFilePath(queue);
+        const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
+        await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
+    }
+    /** Set value of metadata field "reviewed" to today in yyyy-mm-dd format.
+     * @param  {TFile} file
+     * @returns Promise
+     */
     public async setMetadataValueToToday(file: TFile): Promise<void> {
         const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
         await this.changeOrAddMetadataValue(file, todayString);
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
+    
+    /** Get display name (set by user or generated from queue parameters)
+     * @param  {IQueue} queue
+     * @returns queue's display name
+     */
     public getQueueDisplayName(queue: IQueue): string {
         if (queue.name && queue.name != "" ) {
             return queue.name;
@@ -37,7 +61,11 @@ export class QueueService {
         return alias && alias != "" ? alias : "blank queue";
     }
 
-    public getSchemaDescription(queue: IQueue): string {
+    /** Get queue's description (what notes are matched with its parameters)
+     * @param  {IQueue} queue
+     * @returns string
+     */
+    public getQueueDescription(queue: IQueue): string {
         let desc = "matches notes that ";
         if (queue.dataviewQuery && queue.dataviewQuery != "") {
             desc += `are matched with dataviewJS query ${queue.dataviewQuery}`;
@@ -56,6 +84,11 @@ export class QueueService {
         return desc;
     }
 
+    
+    /** Gets amount of notes matched by queue
+     * @param  {IQueue} queue
+     * @returns number
+     */
     public getQueueFilesQty(queue: IQueue): number {
         const pages = this.getQueueFiles(queue);
         return pages.length;
@@ -80,7 +113,7 @@ export class QueueService {
         const query = this.getOrCreateDataviewQuery(queue);
         console.log("query:", query);
         try {
-            return this._api.pages(query);
+            return this._dataviewApi.pages(query);
         } catch (error) {
             throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
         }
@@ -94,7 +127,7 @@ export class QueueService {
     private async changeOrAddMetadataValue(file: TFile = null, value: string): Promise<void> {
         const newFieldValue = `${this._plugin.settings.fieldName}: ${value}`;
         const fileContentSplit = (await this._app.vault.read(file)).split("\n");
-        const page = this._api.page(file.path);
+        const page = this._dataviewApi.page(file.path);
         if (!page[this._plugin.settings.fieldName]) {
             if (fileContentSplit[0] !== "---") {
                 fileContentSplit.unshift("---");

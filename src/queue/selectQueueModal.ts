@@ -23,7 +23,7 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
 
     renderSuggestion(queue: IQueue, el: HTMLElement) {
         el.createDiv({text: this._plugin.service.getQueueDisplayName(queue)});
-        el.createEl("small", {text: this._plugin.service.getSchemaDescription(queue)}).style.opacity = "60%";
+        el.createEl("small", {text: this._plugin.service.getQueueDescription(queue)}).style.opacity = "60%";
     }
 
     onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {

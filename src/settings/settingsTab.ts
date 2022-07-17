@@ -1,13 +1,19 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon } from "obsidian";
-import { EmptyQueue } from "src/queue/IQueue";
+import { EmptyQueue, IQueue } from "src/queue/IQueue";
 import { JoinLogicOperators } from "src/joinLogicOperators";
 import { QueueInfoModal } from "src/queue/queueInfoModal";
+import { SimpleNoteReviewPluginSettings } from "./pluginSettings";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
+	// aliases
+	settings: SimpleNoteReviewPluginSettings;
+	queues: IQueue[];
 
     constructor(private _plugin: SimpleNoteReviewPlugin, app: App) {
         super(app, _plugin);
+		this.settings = this._plugin.settings;
+		this.queues = this._plugin.settings.queues;
     }
 
     refresh(): void {
@@ -21,15 +27,27 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: 'Simple Note Review Settings' });
 
+		//
+		new Setting(containerEl)
+			.setName("Open next note in queue after reviewing a note")
+			.setDesc("After marking note as reviewed, automatically open next note in queue")
+			.addToggle(toggle => {
+				toggle.setValue(this.settings.openNextNoteAfterReviewing)
+				.onChange(value => {
+					this.settings.openNextNoteAfterReviewing = value;
+					this._plugin.saveSettings;
+				})
+			})
+
         containerEl.createEl('h3', { text: 'Queues' });
 
         containerEl.createEl('div', {text: 'A queue is a list of notes waiting for review.'})
 
 		containerEl.createEl('div', {text: 'Queues are reviewed based on review date. Notes with no review date will be reviewed first.'})
 
-        this._plugin.settings 
-		&& this._plugin.settings.queues
-		&& this._plugin.settings.queues.forEach(queue => {
+        this.settings 
+		&& this.queues
+		&& this.queues.forEach(queue => {
 			// Header
             const header = new Setting(containerEl);
 			const nameOnInit = this._plugin.service.getQueueDisplayName(queue);
@@ -55,7 +73,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				cb.setIcon("trash")
 				.setTooltip("Delete queue")
 				.onClick(async () => {
-					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
+					this._plugin.settings.queues = this.queues.filter(q => q.id !== queue.id);
 					await this._plugin.saveSettings();
 					this.refresh();
 				})
@@ -184,7 +202,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			btn.onClick(() => {
 				this._plugin.settings.queues.push(
                         new EmptyQueue(
-							this._plugin.settings.queues.length > 0 ? Math.max(...this._plugin.settings.queues.map(q => q.id)) + 1 : 1), // id "generation"
+							this.queues.length > 0 ? Math.max(...this.queues.map(q => q.id)) + 1 : 1), // id "generation"
                     );
 				this._plugin.saveSettings();
 				this.refresh();

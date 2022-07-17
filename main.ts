@@ -1,9 +1,9 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 import { addSimpleNoteReviewIcon } from 'src/icon';
 import { QueueService } from 'src/queue/queueService';
 import { SelectQueueModal } from 'src/queue/selectQueueModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
-import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settings';
+import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
@@ -31,13 +31,9 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		this.addCommand({
 			id: "simple-note-review-set-reviewed-date",
 			name: "Mark Note As Reviewed Today",
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				this.service.setMetadataValueToToday(view.file).then(() => {
-					if (this.settings.currentQueue) {
-						this.service.openNextFile(this.settings.currentQueue);
-					}
-				});
-			},
+			editorCallback: (async (editor: Editor, view: MarkdownView) => {
+				await this.service.reviewNote(view.file);
+			})
 		});
 
 		this.registerEvent(
@@ -47,10 +43,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 					.setTitle("Mark Note As Reviewed Today")
 					.setIcon(this.markAsReviewedIconName)
 					.onClick(async () => {
-						await this.service.setMetadataValueToToday(view.file); 
-						if (this.settings.currentQueue) {
-							this.service.openNextFile(this.settings.currentQueue);
-						}
+						await this.service.reviewNote(view.file);
 					});
 				});
 			})
@@ -63,10 +56,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 					.setTitle("Mark Note As Reviewed Today")
 					.setIcon(this.markAsReviewedIconName)
 					.onClick(async () => {
-						await this.service.setMetadataValueToToday(file as TFile); 
-						if (this.settings.currentQueue) {
-							this.service.openNextFile(this.settings.currentQueue);
-						}
+						await this.service.reviewNote(file);
 					});
 				});
 			})

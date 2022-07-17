@@ -4,10 +4,12 @@ export interface SimpleNoteReviewPluginSettings {
     fieldName: string
     queues: IQueue[]
     currentQueue: IQueue
+    openNextNoteAfterReviewing: boolean
 }
 
 export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     fieldName = "reviewed";
     queues: IQueue[] = [];
     currentQueue: IQueue = null;
+    openNextNoteAfterReviewing = true;
 }

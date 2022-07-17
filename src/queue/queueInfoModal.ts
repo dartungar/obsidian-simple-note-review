@@ -10,7 +10,7 @@ export class QueueInfoModal extends Modal {
       onOpen() {
         const { contentEl } = this;
         contentEl.createEl("h3", {text: `Queue "${this.service.getQueueDisplayName(this.queue)}"`});
-        contentEl.createDiv({text: `This query ${this.service.getSchemaDescription(this.queue)}.`});
+        contentEl.createDiv({text: `This query ${this.service.getQueueDescription(this.queue)}.`});
         contentEl.createDiv({text: `It currently contains ${this.service.getQueueFilesQty(this.queue)} notes.`});
       }
     
