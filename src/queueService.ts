@@ -18,8 +18,6 @@ export class QueueService {
     // open next fine in queue
     public openNextFile(queue: IQueue): void {
         const filePath = this.getNextFilePath(queue);
-        console.log("opening next file...");
-        console.log("next file path is", filePath);
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
@@ -40,7 +38,6 @@ export class QueueService {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let pages: DataArray<Record<string, any>>;
         const query = this.getOrCreateDataviewQuery(queue);
-        console.log("query:", query);
         try {
             pages = this._api.pages(query);
         } catch (error) {
@@ -62,7 +59,6 @@ export class QueueService {
         return path === this._app.workspace.getActiveFile().path;
     }
 
-    // TODO: validation
     // TODO: check if async works / is really needed
     private async changeOrAddMetadataValue(file: TFile = null, value: string): Promise<void> {
         const newFieldValue = `${this._plugin.settings.fieldName}: ${value}`;
@@ -84,30 +80,26 @@ export class QueueService {
             return newFieldValue;
         });
         await this._app.vault.modify(file, newContent.join("\n"));
-
-        // TODO: show modal somewhere
     }
 
     private getOrCreateDataviewQuery(queue: IQueue): string {
         if (queue.dataviewQuery != "") 
             return queue.dataviewQuery;
         
-        // TODO: handle absence of params - throw an error?
         let tags = "";
         let folders = "";
         if (queue.tags) {
             tags = queue.tags.map(p => {
                 if (p[0] !== "#") return "#" + p;
                 return p;
-            }).join(" or ");
+            }).join(` ${queue.tagsJoinType || "or"} `);
         }
 
         if (queue.folders) {
             folders = queue.folders.join(" or ");
         }
 
-        // TODO: switch for OR / AND
-        if (tags && folders) return `(${tags}) and (${folders})`;
+        if (tags && folders) return `(${tags}) ${queue.foldersToTagsJoinType || "or"} (${folders})`;
 
         if (tags) return tags;
 

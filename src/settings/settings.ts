@@ -1,6 +1,7 @@
 import SimpleNoteReviewPlugin from "main";
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, setIcon } from "obsidian";
 import { EmptyQueue } from "src/IQueue";
+import { JoinLogicOperators } from "src/joinLogicOperators";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
@@ -25,31 +26,41 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('div', {text: 'Queues are reviewed based on review date. Notes with no review date will be reviewed first.'})
 
-		containerEl.createEl('div', {text: '\n Use DataviewJS query by tags and/or folders to build queue. Example query: "#programming and #to_review"'})
-
-
         this._plugin.settings 
 		&& this._plugin.settings.queues
 		&& this._plugin.settings.queues.forEach(queue => {
 			// Header
-            const baseSetting = new Setting(containerEl);
+            const header = new Setting(containerEl);
 			const nameOnInit = this._plugin.service.getQueueDisplayName(queue);
 
-			baseSetting.setHeading();
-			baseSetting.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "New queue");
-			baseSetting.addExtraButton(cb => {
+			header.setHeading();
+			header.setClass("queue-heading");
+			header.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "New queue");
+
+			const baseSettingIconContainer = createSpan({cls: "collapse-icon"});
+			setIcon(baseSettingIconContainer, "right-chevron-glyph");
+			header.nameEl.prepend(baseSettingIconContainer);
+
+			// TODO: button for showing queue stats
+			header.addExtraButton(cb => {
 				cb.setIcon("trash")
 				.setTooltip("Delete queue")
 				.onClick(async () => {
-					//console.log(this._plugin.settings);
 					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
 					await this._plugin.saveSettings();
 					this.refresh();
 				})
 			})
 
-			//setting.setClass("section-setting");
-			const nameSetting = new Setting(containerEl);
+
+			const settingBodyEl = containerEl.createDiv({cls: ["setting-body", "is-collapsed"]})
+
+			header.settingEl.addEventListener("click", e => {
+				settingBodyEl.toggleClass("is-collapsed", !settingBodyEl.hasClass("is-collapsed"));
+				baseSettingIconContainer.toggleClass("rotated90", !baseSettingIconContainer.hasClass("rotated90"));
+			})
+
+			const nameSetting = new Setting(settingBodyEl);
 			nameSetting.setName("Name");
 			nameSetting.setDesc("If omitted, name will be created from tags/folders")
             nameSetting.addText(textField => {
@@ -64,9 +75,9 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				})
 			});
 
-			const tagsSetting = new Setting(containerEl);
+			const tagsSetting = new Setting(settingBodyEl);
 			tagsSetting.setName("Tags");
-			tagsSetting.setDesc(`One or more tags, separated by comma. Queue will contain notes tagged with any of these. Example: #review, #knowledge`)
+			tagsSetting.setDesc(`One or more tags, separated by comma. Queue will contain notes tagged with ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these. Example: #review, #knowledge`)			
 			tagsSetting.addTextArea(textArea => {
 				textArea.setValue(queue.tags ? queue.tags.join(",") : "")
 				.setPlaceholder("Tags")
@@ -76,7 +87,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				});
 			});
 
-			const foldersSetting = new Setting(containerEl);
+			const foldersSetting = new Setting(settingBodyEl);
 			foldersSetting.setName("Folders");
 			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Queue will contain notes located in any of these. Example: "/notes", "/programming"`)			
 			foldersSetting.addTextArea(textArea => {
@@ -87,8 +98,46 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					this._plugin.saveSettings();
 				});
 			});
-			
-			const dataviewQuerySetting = new Setting(containerEl);
+
+			// Advanced Settings
+			const advancedSectionHeader = new Setting(settingBodyEl);
+			advancedSectionHeader.setHeading();
+			advancedSectionHeader.setName("Advanced");
+
+			const advancedSectionIconContainer = createSpan({cls: "collapse-icon"});
+			setIcon(advancedSectionIconContainer, "right-chevron-glyph");
+			advancedSectionHeader.nameEl.prepend(advancedSectionIconContainer);
+
+			const advancedSectionBodyEl = settingBodyEl.createDiv({cls: ["setting-body-advanced", "is-collapsed"]});
+
+			advancedSectionHeader.settingEl.addEventListener("click", e => {
+				advancedSectionBodyEl.toggleClass("is-collapsed", !advancedSectionBodyEl.hasClass("is-collapsed"));
+				advancedSectionIconContainer.toggleClass("rotated90", !advancedSectionIconContainer.hasClass("rotated90"));
+			});
+
+			const tagJoinTypeSetting = new Setting(advancedSectionBodyEl);
+			tagJoinTypeSetting.setName("If tags are specified, match notes with:")
+			tagJoinTypeSetting.addDropdown(dropdown => {
+				dropdown
+				.addOption(JoinLogicOperators.OR, "any of the tags").addOption(JoinLogicOperators.AND, "all of the tags")
+				.setValue(queue.tagsJoinType as string || JoinLogicOperators.OR)
+				.onChange((value: JoinLogicOperators) => {
+					queue.tagsJoinType = value;
+					this._plugin.saveSettings();
+				} )
+			});
+
+			const folderTagJoinTypeSetting = new Setting(advancedSectionBodyEl);
+			folderTagJoinTypeSetting.setName("If folders and tags are specified, match notes with: ")
+			folderTagJoinTypeSetting.addDropdown(dropdown => {
+				dropdown.addOption(JoinLogicOperators.OR, "specified tags OR in these folders").addOption(JoinLogicOperators.AND, "specified tags AND in these folders")
+				.setValue(queue.foldersToTagsJoinType as string || JoinLogicOperators.OR)
+				.onChange((value: JoinLogicOperators) => {
+					queue.foldersToTagsJoinType = value; 
+					this._plugin.saveSettings();} )
+			});
+
+			const dataviewQuerySetting = new Setting(advancedSectionBodyEl);
 			dataviewQuerySetting.setName("DataviewJS query");
 			dataviewQuerySetting.setDesc(`DataviewJS-style query. If used, overrides Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
             dataviewQuerySetting.addTextArea(textArea => {
@@ -102,7 +151,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				});
 			});
 
-			
+			// Helpers
 
 			const updateTagsFoldersSettingsAvailability = (dataviewJsQueryValue: string) : void => {
 				const disableTagsFoldersSettings = dataviewJsQueryValue && (dataviewJsQueryValue != "");
@@ -130,7 +179,6 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
                     );
 				this._plugin.saveSettings();
 				this.refresh();
-				console.log(this._plugin.settings);
 			});
 		});
 
