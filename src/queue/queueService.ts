@@ -76,7 +76,7 @@ export class QueueService {
         }
         if (queue.tags && queue.tags.length > 0) {
             desc += `contain ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${queue.tags.join(", ")}`;
-            if (queue.folders.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
+            if (queue.folders && queue.folders.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
         }
         if (queue.folders && queue.folders.length > 0) {
             desc += `are inside any of these folders (including nested folders): ${queue.folders.join(", ")}`;
