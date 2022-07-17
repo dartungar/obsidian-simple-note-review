@@ -1,7 +1,8 @@
 # Simple Note Review
 Simple, customizable plugin for easy note review, resurfacing  & repetition.
 
-IMPORTANT: this plugin uses Dataview as search engine. Please make sure you have Dataview plugin installed.
+IMPORTANT: this plugin uses amazing [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin as search engine. 
+Please make sure you have Dataview plugin installed.
 
 ### Customizable queues
 Build custom queues for reviewing based on tags, folders, or DataviewJS-style queries.
