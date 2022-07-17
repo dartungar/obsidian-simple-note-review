@@ -1,4 +1,58 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
+/* settings */
+.section-setting {
+	display: block;
+}
+
+.section-setting > .setting-item-control {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+}
+
+.section-setting > .setting-item-control > span {
+	margin-right: 5px;
+}
+
+.section-setting > .setting-item-control > input, .section-setting > .setting-item-control > textarea {
+	margin-right: 30px;
+}
+
+.section-setting textarea {
+	max-height: 200px;
+}
+
+.queue-heading {
+	padding-bottom: 10px;
+    border-bottom: solid 1px lightgray;
+    margin-bottom: 10px;	
+}
+
+.queue-heading > .setting-item-info > .setting-item-name {
+	font-size: 120% !important;
+}
+
+.setting-body {
+	padding-bottom: 7px;
+	margin-bottom: 10px;
+	border-bottom: 1px solid lightgray;
+}
+
+.is-collapsed {
+	display: none;
+}
+
+.collapse-icon {
+	display: inline;
+	transform: none;
+	margin-right: 8px;
+}
+
+.collapse-icon > svg {
+	position: relative;
+	top: 2px;
+}
+
+.rotated90 > svg {
+	transform: rotate(90deg);
 }
