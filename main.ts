@@ -1,6 +1,6 @@
 import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
-import { QueueService } from 'src/queueService';
-import { SelectQueueModal } from 'src/selectQueueModal';
+import { QueueService } from 'src/queue/queueService';
+import { SelectQueueModal } from 'src/queue/selectQueueModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
 import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settings';
 

@@ -2,6 +2,7 @@ import { IQueue } from "./IQueue";
 import {DataArray, getAPI} from "obsidian-dataview";
 import { App, TFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
+import { JoinLogicOperators } from "../joinLogicOperators";
 
 export class QueueEmptyError extends Error {
     message = "Queue is empty";
@@ -34,15 +35,32 @@ export class QueueService {
             : this.getOrCreateDataviewQuery(queue);
     }
 
-    private getNextFilePath(queue: IQueue): string {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let pages: DataArray<Record<string, any>>;
-        const query = this.getOrCreateDataviewQuery(queue);
-        try {
-            pages = this._api.pages(query);
-        } catch (error) {
-            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
+    public getSchemaDescription(queue: IQueue): string {
+        let desc = "matches notes that ";
+        if (queue.dataviewQuery && queue.dataviewQuery != "") {
+            desc += `are matched with dataviewJS query ${queue.dataviewQuery}`;
+            return desc;
         }
+        if (queue.tags.length === 0 && queue.folders.length === 0) {
+            return "matches all notes"
+        }
+        if (queue.tags && queue.tags.length > 0) {
+            desc += `contain ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${queue.tags.join(", ")}`;
+            if (queue.folders.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
+        }
+        if (queue.folders && queue.folders.length > 0) {
+            desc += `are inside any of these folders (including nested folders): ${queue.folders.join(", ")}`;
+        }
+        return desc;
+    }
+
+    public getQueueFilesQty(queue: IQueue): number {
+        const pages = this.getQueueFiles(queue);
+        return pages.length;
+    }
+
+    private getNextFilePath(queue: IQueue): string {
+        const pages = this.getQueueFiles(queue);
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
         if (sorted.length > 0) {
             const firstInQueue = sorted[0]["file"]["path"];
@@ -53,6 +71,17 @@ export class QueueService {
             return this.pathEqualsCurrentFilePath(firstInQueue) ? nextInQueue : firstInQueue;
         } 
         throw new QueueEmptyError();
+    }
+
+    private getQueueFiles(queue: IQueue): DataArray<Record<string, any>> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query = this.getOrCreateDataviewQuery(queue);
+        console.log("query:", query);
+        try {
+            return this._api.pages(query);
+        } catch (error) {
+            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
+        }
     }
 
     private pathEqualsCurrentFilePath(path: string): boolean {
@@ -83,7 +112,7 @@ export class QueueService {
     }
 
     private getOrCreateDataviewQuery(queue: IQueue): string {
-        if (queue.dataviewQuery != "") 
+        if (queue.dataviewQuery && queue.dataviewQuery != "") 
             return queue.dataviewQuery;
         
         let tags = "";
@@ -105,4 +134,6 @@ export class QueueService {
 
         return folders;
     }
+
+
 }

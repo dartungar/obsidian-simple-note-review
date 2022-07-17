@@ -1,6 +1,6 @@
 // TODO: frontmatter keys
 
-import { JoinLogicOperators } from "./joinLogicOperators"
+import { JoinLogicOperators } from "../joinLogicOperators"
 
 // TODO: excluded tags, folders, frontmatter keys
 export interface IQueue {

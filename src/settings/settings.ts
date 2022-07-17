@@ -1,7 +1,8 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon } from "obsidian";
-import { EmptyQueue } from "src/IQueue";
+import { EmptyQueue } from "src/queue/IQueue";
 import { JoinLogicOperators } from "src/joinLogicOperators";
+import { QueueInfoModal } from "src/queue/queueInfoModal";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
@@ -35,13 +36,21 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			header.setHeading();
 			header.setClass("queue-heading");
-			header.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "New queue");
+			header.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "empty queue");
 
 			const baseSettingIconContainer = createSpan({cls: "collapse-icon"});
 			setIcon(baseSettingIconContainer, "right-chevron-glyph");
 			header.nameEl.prepend(baseSettingIconContainer);
 
 			// TODO: button for showing queue stats
+			header.addExtraButton(cb => {
+				cb.setIcon('info')
+				.setTooltip("Queue info & stats")
+				.onClick(() => {
+					new QueueInfoModal(this.app, queue, this._plugin.service).open();
+				})
+			})
+
 			header.addExtraButton(cb => {
 				cb.setIcon("trash")
 				.setTooltip("Delete queue")
@@ -67,7 +76,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				textField.setValue(queue.name)
 				.setPlaceholder(this._plugin.service.getQueueDisplayName(queue))
 				.onChange(value => {
-					queue.name = value;
+					queue.name = value != "" ? value : null;
 					this._plugin.saveSettings();
 					if (value == "") {
 						textField.setPlaceholder(this._plugin.service.getQueueDisplayName(queue));
@@ -82,7 +91,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				textArea.setValue(queue.tags ? queue.tags.join(",") : "")
 				.setPlaceholder("Tags")
 				.onChange(value => {
-					queue.tags = value.split(',').map(f => f.trim());
+					queue.tags = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
 				});
 			});
@@ -94,7 +103,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				textArea.setValue(queue.folders ? queue.folders.join(',') : "")
 				.setPlaceholder("Folders")
 				.onChange(value => {
-					queue.folders = value.split(',').map(f => f.trim());
+					queue.folders = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
 				});
 			});

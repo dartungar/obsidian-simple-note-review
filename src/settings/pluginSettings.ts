@@ -1,4 +1,4 @@
-import { IQueue } from "src/IQueue";
+import { IQueue } from "src/queue/IQueue";
 
 export interface SimpleNoteReviewPluginSettings {
     fieldName: string
