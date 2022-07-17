@@ -16,7 +16,8 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
             q => {
                 if (query == "") return true;
                 const name = this._plugin.service.getQueueDisplayName(q);
-                return name != "" && name.toLowerCase().includes(query.toLowerCase());
+                if (!name || name == "") return false;
+                return name && name != "" && name.toLowerCase().includes(query.toLowerCase());
             });
     }
 

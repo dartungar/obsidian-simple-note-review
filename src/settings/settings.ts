@@ -36,7 +36,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			header.setHeading();
 			header.setClass("queue-heading");
-			header.setName(nameOnInit != "" ? `Queue "${nameOnInit}"` : "empty queue");
+			header.setName(`Queue "${nameOnInit}"`);
 
 			const baseSettingIconContainer = createSpan({cls: "collapse-icon"});
 			setIcon(baseSettingIconContainer, "right-chevron-glyph");

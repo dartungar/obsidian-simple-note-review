@@ -30,9 +30,11 @@ export class QueueService {
     }
 
     public getQueueDisplayName(queue: IQueue): string {
-        return queue.name && queue.name != "" 
-            ? queue.name 
-            : this.getOrCreateDataviewQuery(queue);
+        if (queue.name && queue.name != "" ) {
+            return queue.name;
+        }
+        const alias = this.getOrCreateDataviewQuery(queue);
+        return alias && alias != "" ? alias : "blank queue";
     }
 
     public getSchemaDescription(queue: IQueue): string {
