@@ -1,4 +1,5 @@
 import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { addSimpleNoteReviewIcon } from 'src/icon';
 import { QueueService } from 'src/queue/queueService';
 import { SelectQueueModal } from 'src/queue/selectQueueModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
@@ -7,11 +8,13 @@ import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settings';
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
 	service: QueueService = new QueueService(this.app, this);
-	readonly openModalIconName: string = "sheets-in-box";
+	readonly openModalIconName: string = "simple-note-review-icon";
 	readonly markAsReviewedIconName: string = "checkmark";
 
 	async onload() {
 		await this.loadSettings();
+
+		addSimpleNoteReviewIcon();
 
 		this.addRibbonIcon(this.openModalIconName, "Simple Note Review", (evt: MouseEvent) => {
 			new SelectQueueModal(this.app, this).open();
