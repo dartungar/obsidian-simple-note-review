@@ -1,4 +1,5 @@
 import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
+import { getAPI } from 'obsidian-dataview';
 import { addSimpleNoteReviewIcon } from 'src/icon';
 import { QueueService } from 'src/queue/queueService';
 import { SelectQueueModal } from 'src/queue/selectQueueModal';
@@ -12,6 +13,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 	readonly markAsReviewedIconName: string = "checkmark";
 
 	async onload() {
+		if (!this.dataviewIsInstalled()) {
+			this.showNotice("Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first.")
+			return;
+		}
+
 		await this.loadSettings();
 
 		addSimpleNoteReviewIcon();
@@ -83,5 +89,15 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 	public showNotice(message: string) : void {
 		new Notice(message);
+	}
+
+	private dataviewIsInstalled(): boolean {
+		try {
+			const dv = getAPI();
+			if (dv == null) throw new Error();
+			return true;
+		} catch (error) {
+			return false;
+		}
 	}
 }
