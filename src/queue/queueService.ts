@@ -1,6 +1,6 @@
 import { IQueue } from "./IQueue";
 import {DataArray, getAPI} from "obsidian-dataview";
-import { App, TAbstractFile, TFile } from "obsidian";
+import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { JoinLogicOperators } from "../joinLogicOperators";
 
@@ -23,6 +23,9 @@ export class QueueService {
      * @returns Promise
      */
     public async reviewNote(note: TAbstractFile, queue: IQueue = this._plugin.settings.currentQueue): Promise<void> {
+        // "note" must be an actual note, not folder
+        if (!(note instanceof TFile))
+            return;
         await this.setMetadataValueToToday(note as TFile);
         if (this._plugin.settings.openNextNoteAfterReviewing) {
             await this.openNextFile(queue);
