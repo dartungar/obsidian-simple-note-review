@@ -1,8 +1,9 @@
 import { IQueue } from "./IQueue";
-import {DataArray, getAPI} from "obsidian-dataview";
+import {DataArray} from "obsidian-dataview";
 import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { JoinLogicOperators } from "../joinLogicOperators";
+import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
 
 export class QueueEmptyError extends Error {
     message = "Queue is empty";
@@ -12,7 +13,7 @@ export class DataviewQueryError extends Error { }
 
 export class QueueService {
 
-    private _dataviewApi = getAPI();
+    private _dataviewApi = new DataviewFacade();
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
@@ -118,7 +119,11 @@ export class QueueService {
         try {
             return this._dataviewApi.pages(query);
         } catch (error) {
-            throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
+            if (error instanceof DataviewNotInstalledError) {
+                throw error;
+            } else {
+                throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
+            }
         }
     }
 
