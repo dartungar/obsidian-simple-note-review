@@ -26,12 +26,12 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
         el.createEl("small", {text: this._plugin.service.getQueueDescription(queue)}).style.opacity = "60%";
     }
 
-    onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {
+    async onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {
         try {
             this._plugin.settings.currentQueue = queue;
             this._plugin.saveSettings();
             this._plugin.showNotice(`Set current queue to ${this._plugin.service.getQueueDisplayName(queue)}.`);
-            this._plugin.service.openNextFile(queue);
+            await this._plugin.service.openNextFile(queue);
         } catch (error) {
             this._plugin.showNotice(error.message);
             this.open();

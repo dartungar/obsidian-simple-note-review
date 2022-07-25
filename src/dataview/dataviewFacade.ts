@@ -3,7 +3,7 @@ import { getAPI, DataviewApi, DataArray } from "obsidian-dataview";
 export class DataviewNotInstalledError extends Error {
     constructor() {
         super();
-        this.message = "Dataview plugin not installed";
+        this.message = "Dataview plugin not installed. To use Simple Note Review, Dataview plugin is needed.";
     }
 }
 
@@ -14,7 +14,8 @@ export class DataviewFacade {
     constructor() {
         try {
             this._api = getAPI();
-            this.isDataviewInstalled = true;
+            if (this._api)
+                this.isDataviewInstalled = true;
         } catch (error) {
             throw new DataviewNotInstalledError();
         }
@@ -31,6 +32,7 @@ export class DataviewFacade {
     }
 
     private throwIfDataviewNotInstalled() {
+
         if (!this.isDataviewInstalled)
             throw new DataviewNotInstalledError();
     }

@@ -15,7 +15,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 	async onload() {
 		if (!this.dataviewIsInstalled()) {
 			this.showNotice("Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first.")
-			return;
 		}
 
 		await this.loadSettings();
