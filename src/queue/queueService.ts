@@ -17,6 +17,7 @@ export class QueueService {
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
+
     /** Mark note as reviewed today. If setting "open next note in queue after reviewing" is enabled,
      * open next note in queue (current queue by default).
      * @param  {TAbstractFile} note
@@ -27,11 +28,18 @@ export class QueueService {
         // "note" must be an actual note, not folder
         if (!(note instanceof TFile))
             return;
-        await this.setMetadataValueToToday(note as TFile);
+        try {
+            await this.setMetadataValueToToday(note as TFile);
+        } catch (error) {
+            console.error(error);
+            this._plugin.showNotice(error.message);
+        }
+        
         if (this._plugin.settings.openNextNoteAfterReviewing) {
             await this.openNextFile(queue);
         }
     }
+
 
     /** Open next file in queue.
      * @param  {IQueue} queue
@@ -42,6 +50,8 @@ export class QueueService {
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
+
+
     /** Set value of metadata field "reviewed" to today in yyyy-mm-dd format.
      * @param  {TFile} file
      * @returns Promise
@@ -102,11 +112,12 @@ export class QueueService {
         const pages = this.getQueueFiles(queue);
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
         if (sorted.length > 0) {
-            const firstInQueue = sorted[0]["file"]["path"];
+            const firstNoteIndex = 0;
+            const firstInQueue = sorted[firstNoteIndex]["file"]["path"];
             if (sorted.length === 1) {
                 return firstInQueue;
             }
-            const nextInQueue = sorted[1]["file"]["path"];
+            const nextInQueue = sorted[firstNoteIndex + 1]["file"]["path"];
             return this.pathEqualsCurrentFilePath(firstInQueue) ? nextInQueue : firstInQueue;
         } 
         throw new QueueEmptyError();
