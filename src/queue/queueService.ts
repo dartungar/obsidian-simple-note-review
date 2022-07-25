@@ -31,7 +31,6 @@ export class QueueService {
         try {
             await this.setMetadataValueToToday(note as TFile);
         } catch (error) {
-            console.error(error);
             this._plugin.showNotice(error.message);
         }
         
@@ -126,7 +125,6 @@ export class QueueService {
     private getQueueFiles(queue: IQueue): DataArray<Record<string, any>> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const query = this.getOrCreateDataviewQuery(queue);
-        console.log("query:", query);
         try {
             return this._dataviewApi.pages(query);
         } catch (error) {
