@@ -13,9 +13,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 	readonly markAsReviewedIconName: string = "checkmark";
 
 	async onload() {
-		if (!this.dataviewIsInstalled()) {
-			this.showNotice("Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first.")
-		}
+		this.app.workspace.onLayoutReady(() => {
+			if (!this.dataviewIsInstalled()) {
+				this.showNotice("Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first.")
+			}
+		});
 
 		await this.loadSettings();
 
@@ -26,7 +28,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		})
 
 		this.addCommand({
-			id: "simple-note-review-open-modal",
+			id: "open-modal",
 			name: "Select Queue For Reviewing",
 			callback: () => {
 				new SelectQueueModal(this.app, this).open();
@@ -34,7 +36,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "simple-note-review-set-reviewed-date",
+			id: "set-reviewed-date",
 			name: "Mark Note As Reviewed Today",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
 				await this.service.reviewNote(view.file);
@@ -91,12 +93,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 	}
 
 	private dataviewIsInstalled(): boolean {
-		try {
-			const dv = getAPI();
-			if (dv == null) throw new Error();
-			return true;
-		} catch (error) {
-			return false;
-		}
-	}
+		return !!getAPI();
+	} 
 }

@@ -29,7 +29,7 @@ export class QueueService {
         if (!(note instanceof TFile))
             return;
         try {
-            await this.setMetadataValueToToday(note as TFile);
+            await this.setMetadataValueToToday(note);
         } catch (error) {
             this._plugin.showNotice(error.message);
         }
@@ -109,14 +109,13 @@ export class QueueService {
 
     private getNextFilePath(queue: IQueue): string {
         const pages = this.getQueueFiles(queue);
-        const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
+        const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array();
         if (sorted.length > 0) {
-            const firstNoteIndex = 0;
-            const firstInQueue = sorted[firstNoteIndex]["file"]["path"];
+            const firstInQueue = sorted[0]["file"]["path"];
             if (sorted.length === 1) {
                 return firstInQueue;
             }
-            const nextInQueue = sorted[firstNoteIndex + 1]["file"]["path"];
+            const nextInQueue = sorted[1]["file"]["path"];
             return this.pathEqualsCurrentFilePath(firstInQueue) ? nextInQueue : firstInQueue;
         } 
         throw new QueueEmptyError();
