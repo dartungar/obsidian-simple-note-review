@@ -21,10 +21,11 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: 'Simple Note Review Settings' });
 
-		//
+		// General settings
+
 		new Setting(containerEl)
 			.setName("Open next note in queue after reviewing a note")
-			.setDesc("After marking note as reviewed, automatically open next note in queue")
+			.setDesc("After marking note as reviewed, automatically open next note in queue.")
 			.addToggle(toggle => {
 				toggle.setValue(this._plugin.settings.openNextNoteAfterReviewing)
 				.onChange(value => {
@@ -33,11 +34,23 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				})
 			})
 
+		new Setting(containerEl)
+			.setName("Open random note for review")
+			.setDesc("When reviewing, open random note from queue, instead of note with earliest review date.")
+			.addToggle(toggle => {
+				toggle.setValue(this._plugin.settings.openRandomNote)
+				.onChange(value => {
+					this._plugin.settings.openRandomNote = value;
+					this._plugin.saveSettings;
+				})
+			})
+
+
+		// Queue settings
+
         containerEl.createEl('h3', { text: 'Queues' });
 
         containerEl.createEl('div', {text: 'A queue is a list of notes waiting for review.'})
-
-		containerEl.createEl('div', {text: 'Queues are reviewed based on review date. Notes with no review date will be reviewed first.'})
 
         this._plugin.settings 
 		&& this._plugin.settings.queues
@@ -71,7 +84,6 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
 					await this._plugin.saveSettings();
 					this.refresh();
-					console.log(this._plugin.settings.queues);
 				})
 			})
 
@@ -85,7 +97,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			const nameSetting = new Setting(settingBodyEl);
 			nameSetting.setName("Name");
-			nameSetting.setDesc("If omitted, name will be created from tags/folders")
+			nameSetting.setDesc("If omitted, name will be created from tags/folders.")
             nameSetting.addText(textField => {
 				textField.setValue(queue.name)
 				.setPlaceholder(this._plugin.service.getQueueDisplayName(queue))
@@ -123,6 +135,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			});
 
 			// Advanced Settings
+
 			const advancedSectionHeader = new Setting(settingBodyEl);
 			advancedSectionHeader.setHeading();
 			advancedSectionHeader.setName("Advanced");
@@ -169,7 +182,6 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.onChange(value => {
 					queue.dataviewQuery = value;
 					this._plugin.saveSettings();
-					// TODO: debounce
 					updateTagsFoldersSettingsAvailability(value);
 				});
 			});

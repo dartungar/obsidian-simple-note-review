@@ -5,6 +5,7 @@ export interface SimpleNoteReviewPluginSettings {
     queues: IQueue[]
     currentQueue: IQueue
     openNextNoteAfterReviewing: boolean
+    openRandomNote: boolean
 }
 
 export class DefaultSettings implements SimpleNoteReviewPluginSettings {
@@ -12,4 +13,5 @@ export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     queues: IQueue[] = [];
     currentQueue: IQueue = null;
     openNextNoteAfterReviewing = true;
+    openRandomNote = false;
 }

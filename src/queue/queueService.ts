@@ -111,7 +111,7 @@ export class QueueService {
         const pages = this.getQueueFiles(queue);
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array(); // TODO: files without field should come first - check default behavior
         if (sorted.length > 0) {
-            const firstNoteIndex = 0;
+            const firstNoteIndex = this._plugin.settings.openRandomNote ? ~~(Math.random() * sorted.length) : 0;
             const firstInQueue = sorted[firstNoteIndex]["file"]["path"];
             if (sorted.length === 1) {
                 return firstInQueue;
