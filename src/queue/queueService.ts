@@ -80,18 +80,18 @@ export class QueueService {
      */
     public getQueueDescription(queue: IQueue): string {
         let desc = "matches notes that ";
-        if (queue.dataviewQuery && queue.dataviewQuery != "") {
+        if (queue.dataviewQuery && queue.dataviewQuery !== "") {
             desc += `are matched with dataviewJS query ${queue.dataviewQuery}`;
             return desc;
         }
-        if (queue.tags.length === 0 && queue.folders.length === 0) {
+        if (queue.tags?.length === 0 && queue.folders?.length === 0) {
             return "matches all notes"
         }
-        if (queue.tags && queue.tags.length > 0) {
+        if (queue.tags && queue.tags?.length > 0) {
             desc += `contain ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${queue.tags.join(", ")}`;
-            if (queue.folders && queue.folders.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
+            if (queue.folders && queue.folders?.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
         }
-        if (queue.folders && queue.folders.length > 0) {
+        if (queue.folders && queue.folders?.length > 0) {
             desc += `are inside any of these folders (including nested folders): ${queue.folders.join(", ")}`;
         }
         return desc;
