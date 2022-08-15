@@ -38,17 +38,17 @@
 	border-bottom: 1px solid lightgray;
 }
 
-.is-collapsed {
+.setting-body.is-collapsed {
 	display: none;
 }
 
-.collapse-icon {
+.simple-note-review-collapse-icon {
 	display: inline;
 	transform: none;
 	margin-right: 8px;
 }
 
-.collapse-icon > svg {
+.simple-note-review-collapse-icon > svg {
 	position: relative;
 	top: 2px;
 }

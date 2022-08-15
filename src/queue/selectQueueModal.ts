@@ -10,14 +10,20 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
         super(_app);
     }
 
-    getSuggestions(query: string): IQueue[] | Promise<IQueue[]> {
+    getSuggestions(query: string): IQueue[] {
         this.setPlaceholder("Select a queue to start reviewing notes");
         return this._plugin.settings.queues.filter(
             q => {
-                if (query == "") return true;
+                if (query === "") {
+                    return true;
+                } 
+
                 const name = this._plugin.service.getQueueDisplayName(q);
-                if (!name || name == "") return false;
-                return name && name != "" && name.toLowerCase().includes(query.toLowerCase());
+                if (!name || name === "") {
+                    return false;
+                } 
+                
+                return name.toLowerCase().includes(query.toLowerCase());
             });
     }
 

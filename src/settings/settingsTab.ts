@@ -63,7 +63,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			header.setClass("queue-heading");
 			header.setName(`Queue "${nameOnInit}"`);
 
-			const baseSettingIconContainer = createSpan({cls: "collapse-icon"});
+			const baseSettingIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
 			setIcon(baseSettingIconContainer, "right-chevron-glyph");
 			header.nameEl.prepend(baseSettingIconContainer);
 
@@ -140,7 +140,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			advancedSectionHeader.setHeading();
 			advancedSectionHeader.setName("Advanced");
 
-			const advancedSectionIconContainer = createSpan({cls: "collapse-icon"});
+			const advancedSectionIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
 			setIcon(advancedSectionIconContainer, "right-chevron-glyph");
 			advancedSectionHeader.nameEl.prepend(advancedSectionIconContainer);
 
