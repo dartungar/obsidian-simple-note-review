@@ -38,7 +38,8 @@
 	border-bottom: 1px solid lightgray;
 }
 
-.setting-body.is-collapsed {
+.setting-body.is-collapsed, 
+.setting-body-advanced.is-collapsed {
 	display: none;
 }
 
@@ -51,8 +52,9 @@
 .simple-note-review-collapse-icon > svg {
 	position: relative;
 	top: 2px;
+	transform: rotate(180deg);
 }
 
 .rotated90 > svg {
-	transform: rotate(90deg);
+	transform: rotate(270deg);
 }
