@@ -1,5 +1,5 @@
 import SimpleNoteReviewPlugin from "main";
-import { App, PluginSettingTab, Setting, setIcon } from "obsidian";
+import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
 import { EmptyQueue } from "src/queue/IQueue";
 import { JoinLogicOperators } from "src/joinLogicOperators";
 import { QueueInfoModal } from "src/queue/queueInfoModal";
@@ -55,19 +55,24 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
         this._plugin.settings 
 		&& this._plugin.settings.queues
 		&& this._plugin.settings.queues.forEach(queue => {
+			this._plugin.service.updateQueueDisplayNameAndDescription(queue);
+
 			// Header
             const header = new Setting(containerEl);
-			const nameOnInit = this._plugin.service.getQueueDisplayName(queue);
+			const baseSettingIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
 
 			header.setHeading();
 			header.setClass("queue-heading");
-			header.setName(`Queue "${nameOnInit}"`);
 
-			const baseSettingIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
-			setIcon(baseSettingIconContainer, "right-chevron-glyph");
-			header.nameEl.prepend(baseSettingIconContainer);
+			const updateHeader = (text: string): void => {
+				header.setName(`Queue "${text}"`);
+				
+				setIcon(baseSettingIconContainer, "right-chevron-glyph");
+				header.nameEl.prepend(baseSettingIconContainer);
+			}
 
-			// TODO: button for showing queue stats
+			updateHeader(queue.displayName);
+
 			header.addExtraButton(cb => {
 				cb.setIcon('info')
 				.setTooltip("Queue info & stats")
@@ -80,7 +85,6 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				cb.setIcon("trash")
 				.setTooltip("Delete queue")
 				.onClick(async () => {
-					console.log("deleting queue with id", queue.id, this._plugin.settings.queues);
 					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
 					await this._plugin.saveSettings();
 					this.refresh();
@@ -100,13 +104,17 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			nameSetting.setDesc("If omitted, name will be created from tags/folders.")
             nameSetting.addText(textField => {
 				textField.setValue(queue.name)
-				.setPlaceholder(this._plugin.service.getQueueDisplayName(queue))
+				.setPlaceholder(queue.displayName)
 				.onChange(value => {
+					if (value === queue.name) {
+						return;
+					}
 					queue.name = value != "" ? value : null;
 					this._plugin.saveSettings();
 					if (value == "") {
-						textField.setPlaceholder(this._plugin.service.getQueueDisplayName(queue));
+						textField.setPlaceholder(queue.displayName);
 					}
+					updateQueueDisplayName();
 				})
 			});
 
@@ -119,6 +127,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.onChange(value => {
 					queue.tags = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
+					updateQueueDisplayName();
 				});
 			});
 
@@ -131,6 +140,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.onChange(value => {
 					queue.folders = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
+					updateQueueDisplayName();
 				});
 			});
 
@@ -160,6 +170,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.onChange((value: JoinLogicOperators) => {
 					queue.tagsJoinType = value;
 					this._plugin.saveSettings();
+					updateQueueDisplayName();
 				} )
 			});
 
@@ -170,7 +181,9 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				.setValue(queue.foldersToTagsJoinType as string || JoinLogicOperators.OR)
 				.onChange((value: JoinLogicOperators) => {
 					queue.foldersToTagsJoinType = value; 
-					this._plugin.saveSettings();} )
+					this._plugin.saveSettings();
+					updateQueueDisplayName();
+				})
 			});
 
 			const dataviewQuerySetting = new Setting(advancedSectionBodyEl);
@@ -183,6 +196,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					queue.dataviewQuery = value;
 					this._plugin.saveSettings();
 					updateTagsFoldersSettingsAvailability(value);
+					updateQueueDisplayName();
 				});
 			});
 
@@ -202,6 +216,16 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			}
 
 			updateTagsFoldersSettingsAvailability(queue.dataviewQuery);
+
+			const updateQueueDisplayName = (): void => {
+				const debounced = debounce(() => {
+					this._plugin.service.updateQueueDisplayNameAndDescription(queue);
+					updateHeader(queue.displayName);
+				}, 1000);
+				debounced();
+			}
+
+
         })
 
         new Setting(containerEl)
@@ -217,6 +241,4 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			});
 		});
     }
-
-
 }

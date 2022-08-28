@@ -23,6 +23,8 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		addSimpleNoteReviewIcon();
 
+		this.service.updateQueueDisplayNames();
+
 		this.addRibbonIcon(this.openModalIconName, "Simple Note Review", (evt: MouseEvent) => {
 			new SelectQueueModal(this.app, this).open();
 		})

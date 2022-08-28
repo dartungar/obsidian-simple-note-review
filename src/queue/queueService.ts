@@ -1,22 +1,20 @@
 import { IQueue } from "./IQueue";
-import {DataArray} from "obsidian-dataview";
 import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
-import { JoinLogicOperators } from "../joinLogicOperators";
-import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
+import { DataviewService } from "./dataviewService";
+import { QueueInfoService } from "./queueInfoService";
+
 
 export class QueueEmptyError extends Error {
     message = "Queue is empty";
 }
-
 export class DataviewQueryError extends Error { }
 
 export class QueueService {
-
-    private _dataviewApi = new DataviewFacade();
+    private _dataviewService = new DataviewService();
+    private _queueInfoService = new QueueInfoService(this._dataviewService);
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
-
 
     /** Mark note as reviewed today. If setting "open next note in queue after reviewing" is enabled,
      * open next note in queue (current queue by default).
@@ -24,6 +22,20 @@ export class QueueService {
      * @param  {IQueue=this._plugin.settings.currentQueue} queue
      * @returns Promise
      */
+
+
+    public updateQueueDisplayNames() {
+        this._plugin.settings.queues.forEach(q => this.updateQueueDisplayNameAndDescription(q));
+    } 
+
+    public updateQueueDisplayNameAndDescription(queue: IQueue) {
+        this._queueInfoService.updateQueueDisplayNameAndDescription(queue);
+    }
+
+    public updateQueueStats(queue: IQueue) {
+        this._queueInfoService.updateQueueStats(queue);
+    }
+
     public async reviewNote(note: TAbstractFile, queue: IQueue = this._plugin.settings.currentQueue): Promise<void> {
         // "note" must be an actual note, not folder
         if (!(note instanceof TFile))
@@ -61,54 +73,8 @@ export class QueueService {
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
-    
-    /** Get display name (set by user or generated from queue parameters)
-     * @param  {IQueue} queue
-     * @returns queue's display name
-     */
-    public getQueueDisplayName(queue: IQueue): string {
-        if (queue.name && queue.name != "" ) {
-            return queue.name;
-        }
-        const alias = this.getOrCreateDataviewQuery(queue);
-        return alias && alias != "" ? alias : "blank queue";
-    }
-
-    /** Get queue's description (what notes are matched with its parameters)
-     * @param  {IQueue} queue
-     * @returns string
-     */
-    public getQueueDescription(queue: IQueue): string {
-        let desc = "matches notes that ";
-        if (queue.dataviewQuery && queue.dataviewQuery !== "") {
-            desc += `are matched with dataviewJS query ${queue.dataviewQuery}`;
-            return desc;
-        }
-        if (queue.tags?.length === 0 && queue.folders?.length === 0) {
-            return "matches all notes"
-        }
-        if (queue.tags && queue.tags?.length > 0) {
-            desc += `contain ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${queue.tags.join(", ")}`;
-            if (queue.folders && queue.folders?.length > 0) desc += ` ${queue.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
-        }
-        if (queue.folders && queue.folders?.length > 0) {
-            desc += `are inside any of these folders (including nested folders): ${queue.folders.join(", ")}`;
-        }
-        return desc;
-    }
-
-    
-    /** Gets amount of notes matched by queue
-     * @param  {IQueue} queue
-     * @returns number
-     */
-    public getQueueFilesQty(queue: IQueue): number {
-        const pages = this.getQueueFiles(queue);
-        return pages.length;
-    }
-
     private getNextFilePath(queue: IQueue): string {
-        const pages = this.getQueueFiles(queue);
+        const pages = this._dataviewService.getQueueFiles(queue);
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array();
         if (sorted.length > 0) {
             const firstNoteIndex = this._plugin.settings.openRandomNote ? ~~(Math.random() * sorted.length) : 0;
@@ -122,29 +88,16 @@ export class QueueService {
         throw new QueueEmptyError();
     }
 
-    private getQueueFiles(queue: IQueue): DataArray<Record<string, any>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const query = this.getOrCreateDataviewQuery(queue);
-        try {
-            return this._dataviewApi.pages(query);
-        } catch (error) {
-            if (error instanceof DataviewNotInstalledError) {
-                throw error;
-            } else {
-                throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for queue "${this.getQueueDisplayName(queue)}".`)
-            }
-        }
-    }
-
     private pathEqualsCurrentFilePath(path: string): boolean {
         return path === this._app.workspace.getActiveFile().path;
     }
 
     // TODO: check if async works / is really needed
+    // TODO: do not mangle metadata
     private async changeOrAddMetadataValue(file: TFile = null, value: string): Promise<void> {
         const newFieldValue = `${this._plugin.settings.fieldName}: ${value}`;
         const fileContentSplit = (await this._app.vault.read(file)).split("\n");
-        const page = this._dataviewApi.page(file.path);
+        const page = this._dataviewService.getPageFromPath(file.path);
         if (!page[this._plugin.settings.fieldName]) {
             if (fileContentSplit[0] !== "---") {
                 fileContentSplit.unshift("---");
@@ -162,30 +115,5 @@ export class QueueService {
         });
         await this._app.vault.modify(file, newContent.join("\n"));
     }
-
-    private getOrCreateDataviewQuery(queue: IQueue): string {
-        if (queue.dataviewQuery && queue.dataviewQuery != "") 
-            return queue.dataviewQuery;
-        
-        let tags = "";
-        let folders = "";
-        if (queue.tags) {
-            tags = queue.tags.map(p => {
-                if (p[0] !== "#") return "#" + p;
-                return p;
-            }).join(` ${queue.tagsJoinType || "or"} `);
-        }
-
-        if (queue.folders) {
-            folders = queue.folders.join(" or ");
-        }
-
-        if (tags && folders) return `(${tags}) ${queue.foldersToTagsJoinType || "or"} (${folders})`;
-
-        if (tags) return tags;
-
-        return folders;
-    }
-
 
 }
