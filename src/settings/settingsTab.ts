@@ -91,6 +91,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			const settingBodyEl = containerEl.createDiv({cls: ["setting-body", "is-collapsed"]})
 
 			header.settingEl.addEventListener("click", e => {
+				// ignore clicks on  additional buttons in header
+				if ((e.target as HTMLElement).classList.contains("setting-editor-extra-setting-button")) {
+					return;
+				}
 				settingBodyEl.toggleClass("is-collapsed", !settingBodyEl.hasClass("is-collapsed"));
 				baseSettingIconContainer.toggleClass("rotated90", !baseSettingIconContainer.hasClass("rotated90"));
 			})
