@@ -24,7 +24,7 @@
 
 .noteSet-heading {
 	padding-bottom: 10px;
-    border-bottom: solid 1px lightgray;
+    border-top: solid 2px rgba(138, 138, 138, 0.25);
     margin-bottom: 10px;	
 }
 
@@ -35,7 +35,6 @@
 .setting-body {
 	padding-bottom: 7px;
 	margin-bottom: 10px;
-	border-bottom: 1px solid lightgray;
 }
 
 .setting-body.is-collapsed, 
@@ -52,11 +51,6 @@
 .simple-note-review-collapse-icon > svg {
 	position: relative;
 	top: 2px;
-	transform: rotate(180deg);
-}
-
-.rotated90 > svg {
-	transform: rotate(270deg);
 }
 
 .note-set-delete-modal {

@@ -24,8 +24,8 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		// General settings
 
 		new Setting(containerEl)
-			.setName("Open next note in note set after reviewing a note")
-			.setDesc("After marking note as reviewed, automatically open next note in note set.")
+			.setName("Open next note in the note set after reviewing a note")
+			.setDesc("After marking note as reviewed, automatically open next note in the note set.")
 			.addToggle(toggle => {
 				toggle.setValue(this._plugin.settings.openNextNoteAfterReviewing)
 				.onChange(value => {
@@ -36,7 +36,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Open random note for review")
-			.setDesc("When reviewing, open random note from note set, instead of note with earliest review date.")
+			.setDesc("When reviewing, open a random note from the note set, instead of a note with earliest review date.")
 			.addToggle(toggle => {
 				toggle.setValue(this._plugin.settings.openRandomNote)
 				.onChange(value => {
@@ -58,14 +58,25 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			// Header
             const header = new Setting(containerEl);
 			const baseSettingIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
+			const settingBodyEl = containerEl.createDiv({cls: ["setting-body", "is-collapsed"]});
+
 
 			header.setHeading();
 			header.setClass("noteSet-heading");
 
+			// TODO: move to helpers module
+
+			const rotateChevronIconIfCollapsed = (iconContainerEl: HTMLElement, bodyEl: HTMLElement) => {
+				if (bodyEl.classList.contains("is-collapsed")) {
+					setIcon(iconContainerEl, "right-chevron-glyph");
+				} else {
+					setIcon(iconContainerEl, "down-chevron-glyph");
+				}
+			}
+
 			const updateHeader = (text: string): void => {
 				header.setName(`Note Set "${text}"`);
-				
-				setIcon(baseSettingIconContainer, "right-chevron-glyph");
+				rotateChevronIconIfCollapsed(baseSettingIconContainer, settingBodyEl);
 				header.nameEl.prepend(baseSettingIconContainer);
 			}
 
@@ -87,8 +98,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				})
 			})
 
-
-			const settingBodyEl = containerEl.createDiv({cls: ["setting-body", "is-collapsed"]})
+			
 
 			header.settingEl.addEventListener("click", e => {
 				// ignore clicks on  additional buttons in header
@@ -96,12 +106,12 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					return;
 				}
 				settingBodyEl.toggleClass("is-collapsed", !settingBodyEl.hasClass("is-collapsed"));
-				baseSettingIconContainer.toggleClass("rotated90", !baseSettingIconContainer.hasClass("rotated90"));
+				rotateChevronIconIfCollapsed(baseSettingIconContainer, settingBodyEl);
 			})
 
 			const nameSetting = new Setting(settingBodyEl);
 			nameSetting.setName("Name");
-			nameSetting.setDesc("If omitted, name will be created from tags/folders.")
+			nameSetting.setDesc("If omitted, the name will be created from tags, folders, or dataviewJS query (if these are set).")
             nameSetting.addText(textField => {
 				textField.setValue(noteSet.name)
 				.setPlaceholder(noteSet.displayName)
@@ -158,7 +168,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			advancedSectionHeader.settingEl.addEventListener("click", e => {
 				advancedSectionBodyEl.toggleClass("is-collapsed", !advancedSectionBodyEl.hasClass("is-collapsed"));
-				advancedSectionIconContainer.toggleClass("rotated90", !advancedSectionIconContainer.hasClass("rotated90"));
+				rotateChevronIconIfCollapsed(advancedSectionIconContainer, advancedSectionBodyEl);
 			});
 
 			const tagJoinTypeSetting = new Setting(advancedSectionBodyEl);
@@ -175,7 +185,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			});
 
 			const folderTagJoinTypeSetting = new Setting(advancedSectionBodyEl);
-			folderTagJoinTypeSetting.setName("If folders and tags are specified, match notes with: ")
+			folderTagJoinTypeSetting.setName("If folders *and* tags are specified, match notes with: ")
 			folderTagJoinTypeSetting.addDropdown(dropdown => {
 				dropdown.addOption(JoinLogicOperators.OR, "specified tags OR in these folders").addOption(JoinLogicOperators.AND, "specified tags AND in these folders")
 				.setValue(noteSet.foldersToTagsJoinType as string || JoinLogicOperators.OR)
@@ -188,7 +198,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			const dataviewQuerySetting = new Setting(advancedSectionBodyEl);
 			dataviewQuerySetting.setName("DataviewJS query");
-			dataviewQuerySetting.setDesc(`DataviewJS-style query. If used, overrides Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
+			dataviewQuerySetting.setDesc(`DataviewJS-style query for more flexible control over the note set. If used, overrides Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
             dataviewQuerySetting.addTextArea(textArea => {
 				textArea.setValue(noteSet.dataviewQuery)
 				.setPlaceholder("DataviewJS query")
@@ -224,8 +234,6 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				}, 1000);
 				debounced();
 			}
-
-
         })
 
         new Setting(containerEl)
