@@ -42,8 +42,9 @@ export class DataviewService {
 
         if (tags) return tags;
 
-        return folders;
+        if (folders) return folders;
 
+        return null;
     }
 
     public getPageFromPath(path: string): Record<string, any> {

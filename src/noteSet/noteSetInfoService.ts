@@ -30,7 +30,7 @@ export class NoteSetInfoService {
             return noteSet.name;
         }
         const alias = this._dataviewService.getOrCreateBaseDataviewQuery(noteSet);
-        return alias && alias != "" ? alias : "blank noteSet";
+        return alias && alias != "" ? alias : "blank note set";
     }
 
     /** Get noteSet's description (what notes are matched with its parameters)
@@ -38,13 +38,15 @@ export class NoteSetInfoService {
     * @returns string
     */
     private getNoteSetDescription(noteSet: INoteSet): string {
+
+        if (!this._dataviewService.getOrCreateBaseDataviewQuery(noteSet)) {
+            return "matches all notes"
+        }
+
         let desc = "matches notes that ";
         if (noteSet.dataviewQuery && noteSet.dataviewQuery !== "") {
             desc += `are matched with dataviewJS query ${noteSet.dataviewQuery}`;
             return desc;
-        }
-        if (noteSet.tags?.length === 0 && noteSet.folders?.length === 0) {
-            return "matches all notes"
         }
         if (noteSet.tags && noteSet.tags?.length > 0) {
             desc += `contain ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${noteSet.tags.join(", ")}`;
