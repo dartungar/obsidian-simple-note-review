@@ -1,4 +1,4 @@
-import { INoteSet } from "./INoteSet";
+import { EmptyNoteSet, INoteSet } from "./INoteSet";
 import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "./dataviewService";
@@ -15,6 +15,21 @@ export class NoteSetService {
     private _noteSetInfoService = new NoteSetInfoService(this._dataviewService);
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
+
+    public async addEmptyNoteSet() {
+        this._plugin.settings.noteSets.push(
+            new EmptyNoteSet(
+                this._plugin.settings.noteSets.length > 0 
+                ? Math.max(...this._plugin.settings.noteSets.map(q => q.id)) + 1 
+                : 1), // id "generation"
+        );
+    await this._plugin.saveSettings();
+    }
+
+    public async deleteNoteSet(noteSet: INoteSet) {
+        this._plugin.settings.noteSets = this._plugin.settings.noteSets.filter(q => q.id !== noteSet.id);
+        await this._plugin.saveSettings();
+    }
 
     /** Mark note as reviewed today. If setting "open next note in noteSet after reviewing" is enabled,
      * open next note in noteSet (current noteSet by default).

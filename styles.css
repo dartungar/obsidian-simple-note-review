@@ -58,3 +58,9 @@
 .rotated90 > svg {
 	transform: rotate(270deg);
 }
+
+.note-set-delete-modal {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}

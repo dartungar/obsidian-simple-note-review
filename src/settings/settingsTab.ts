@@ -1,7 +1,7 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
-import { EmptyNoteSet } from "src/noteSet/INoteSet";
 import { JoinLogicOperators } from "src/joinLogicOperators";
+import { NoteSetDeleteModal } from "src/noteSet/noteSetDeleteModal";
 import { NoteSetInfoModal } from "src/noteSet/noteSetInfoModal";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
@@ -83,9 +83,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				cb.setIcon("trash")
 				.setTooltip("Delete note set")
 				.onClick(async () => {
-					this._plugin.settings.noteSets = this._plugin.settings.noteSets.filter(q => q.id !== noteSet.id);
-					await this._plugin.saveSettings();
-					this.refresh();
+					new NoteSetDeleteModal(this.app, this, noteSet, this._plugin.service).open();
 				})
 			})
 
@@ -229,12 +227,8 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
         new Setting(containerEl)
 		.addButton(btn => {
 			btn.setButtonText("Add Note Set");
-			btn.onClick(() => {
-				this._plugin.settings.noteSets.push(
-                        new EmptyNoteSet(
-							this._plugin.settings.noteSets.length > 0 ? Math.max(...this._plugin.settings.noteSets.map(q => q.id)) + 1 : 1), // id "generation"
-                    );
-				this._plugin.saveSettings();
+			btn.onClick(async () => {
+				await this._plugin.service.addEmptyNoteSet();
 				this.refresh();
 			});
 		});
