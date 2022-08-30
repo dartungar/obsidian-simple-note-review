@@ -1,14 +1,14 @@
 import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 import { getAPI } from 'obsidian-dataview';
 import { addSimpleNoteReviewIcon } from 'src/icon';
-import { QueueService } from 'src/queue/queueService';
-import { SelectQueueModal } from 'src/queue/selectQueueModal';
+import { NoteSetService } from 'src/noteSet/noteSetService';
+import { SelectNoteSetModal } from 'src/noteSet/selectNoteSetModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
 import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
-	service: QueueService = new QueueService(this.app, this);
+	service: NoteSetService = new NoteSetService(this.app, this);
 	readonly openModalIconName: string = "simple-note-review-icon";
 	readonly markAsReviewedIconName: string = "checkmark";
 
@@ -23,17 +23,17 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		addSimpleNoteReviewIcon();
 
-		this.service.updateQueueDisplayNames();
+		this.service.updateNoteSetDisplayNames();
 
 		this.addRibbonIcon(this.openModalIconName, "Simple Note Review", (evt: MouseEvent) => {
-			new SelectQueueModal(this.app, this).open();
+			new SelectNoteSetModal(this.app, this).open();
 		})
 
 		this.addCommand({
 			id: "open-modal",
-			name: "Select Queue For Reviewing",
+			name: "Select Note Set For Reviewing",
 			callback: () => {
-				new SelectQueueModal(this.app, this).open();
+				new SelectNoteSetModal(this.app, this).open();
 			},
 		});
 

@@ -1,44 +1,44 @@
 import { DataArray } from "obsidian-dataview";
 import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
-import { IQueue } from "./IQueue";
-import { DataviewQueryError } from "./queueService";
+import { INoteSet } from "./INoteSet";
+import { DataviewQueryError } from "./noteSetService";
 
 
 export class DataviewService {
     private _dataviewApi = new DataviewFacade();
 
-    public getQueueFiles(queue: IQueue): DataArray<Record<string, any>> {
+    public getNoteSetFiles(noteSet: INoteSet): DataArray<Record<string, any>> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const query = this.getOrCreateBaseDataviewQuery(queue);
+        const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {
             return this._dataviewApi.pages(query);
         } catch (error) {
             if (error instanceof DataviewNotInstalledError) {
                 throw error;
             } else {
-                throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for the current queue.`)
+                throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for the current noteSet.`)
             }
         }
     }
 
-    public getOrCreateBaseDataviewQuery(queue: IQueue): string {
-        if (queue.dataviewQuery && queue.dataviewQuery != "") 
-            return queue.dataviewQuery;
+    public getOrCreateBaseDataviewQuery(noteSet: INoteSet): string {
+        if (noteSet.dataviewQuery && noteSet.dataviewQuery != "") 
+            return noteSet.dataviewQuery;
         
         let tags = "";
         let folders = "";
-        if (queue.tags) {
-            tags = queue.tags.map(p => {
+        if (noteSet.tags) {
+            tags = noteSet.tags.map(p => {
                 if (p[0] !== "#") return "#" + p;
                 return p;
-            }).join(` ${queue.tagsJoinType || "or"} `);
+            }).join(` ${noteSet.tagsJoinType || "or"} `);
         }
 
-        if (queue.folders) {
-            folders = queue.folders.join(" or ");
+        if (noteSet.folders) {
+            folders = noteSet.folders.join(" or ");
         }
 
-        if (tags && folders) return `(${tags}) ${queue.foldersToTagsJoinType || "or"} (${folders})`;
+        if (tags && folders) return `(${tags}) ${noteSet.foldersToTagsJoinType || "or"} (${folders})`;
 
         if (tags) return tags;
 

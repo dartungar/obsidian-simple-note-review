@@ -1,4 +1,4 @@
-export interface IQueueStats {
+export interface INoteSetStats {
     totalCount: number,
     notRewiewedCount: number,
     reviewedLastSevenDaysCount: number,

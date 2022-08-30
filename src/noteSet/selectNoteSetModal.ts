@@ -1,8 +1,8 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, SuggestModal } from "obsidian";
-import { IQueue } from "./IQueue";
+import { INoteSet } from "./INoteSet";
 
-export class SelectQueueModal extends SuggestModal<IQueue> {
+export class SelectNoteSetModal extends SuggestModal<INoteSet> {
     /**
      *
      */
@@ -10,9 +10,9 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
         super(_app);
     }
 
-    getSuggestions(query: string): IQueue[] {
-        this.setPlaceholder("Select a queue to start reviewing notes");
-        return this._plugin.settings.queues.filter(
+    getSuggestions(query: string): INoteSet[] {
+        this.setPlaceholder("Select a note set to start reviewing notes");
+        return this._plugin.settings.noteSets.filter(
             q => {
                 if (query === "") {
                     return true;
@@ -27,17 +27,17 @@ export class SelectQueueModal extends SuggestModal<IQueue> {
             });
     }
 
-    renderSuggestion(queue: IQueue, el: HTMLElement) {
-        el.createDiv({text: queue.displayName});
-        el.createEl("small", {text: queue.description}).style.opacity = "60%";
+    renderSuggestion(noteSet: INoteSet, el: HTMLElement) {
+        el.createDiv({text: noteSet.displayName});
+        el.createEl("small", {text: noteSet.description}).style.opacity = "60%";
     }
 
-    async onChooseSuggestion(queue: IQueue, evt: MouseEvent | KeyboardEvent) {
+    async onChooseSuggestion(noteSet: INoteSet, evt: MouseEvent | KeyboardEvent) {
         try {
-            this._plugin.settings.currentQueue = queue;
+            this._plugin.settings.currentNoteSet = noteSet;
             this._plugin.saveSettings();
-            this._plugin.showNotice(`Set current queue to ${queue.displayName}.`);
-            await this._plugin.service.openNextFile(queue);
+            this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
+            await this._plugin.service.openNextFile(noteSet);
         } catch (error) {
             this._plugin.showNotice(error.message);
             this.open();

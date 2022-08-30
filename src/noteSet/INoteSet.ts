@@ -1,10 +1,10 @@
 // TODO: frontmatter keys
 
 import { JoinLogicOperators } from "../joinLogicOperators"
-import { IQueueStats } from "./IQueueStats"
+import { INoteSetStats } from "./INoteSetStats"
 
 // TODO: excluded tags, folders, frontmatter keys
-export interface IQueue {
+export interface INoteSet {
     id: number
     name: string
     displayName: string
@@ -14,12 +14,12 @@ export interface IQueue {
     folders: string[]
     foldersToTagsJoinType: JoinLogicOperators
     dataviewQuery: string
-    stats: IQueueStats
+    stats: INoteSetStats
 }
 
-export class EmptyQueue implements IQueue {
+export class EmptyNoteSet implements INoteSet {
     id: number
-    name: "New queue"
+    name: "new note set"
     displayName: string
     description: string
     tags: []
@@ -27,7 +27,7 @@ export class EmptyQueue implements IQueue {
     folders: []
     foldersToTagsJoinType: JoinLogicOperators.OR
     dataviewQuery: ""
-    stats: IQueueStats
+    stats: INoteSetStats
 
     constructor(id: number) {    
         this.id = id;    

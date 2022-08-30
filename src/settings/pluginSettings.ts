@@ -1,17 +1,17 @@
-import { IQueue } from "src/queue/IQueue";
+import { INoteSet } from "src/noteSet/INoteSet";
 
 export interface SimpleNoteReviewPluginSettings {
     fieldName: string
-    queues: IQueue[]
-    currentQueue: IQueue
+    noteSets: INoteSet[]
+    currentNoteSet: INoteSet
     openNextNoteAfterReviewing: boolean
     openRandomNote: boolean
 }
 
 export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     fieldName = "reviewed";
-    queues: IQueue[] = [];
-    currentQueue: IQueue = null;
+    noteSets: INoteSet[] = [];
+    currentNoteSet: INoteSet = null;
     openNextNoteAfterReviewing = true;
     openRandomNote = false;
 }

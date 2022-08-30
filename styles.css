@@ -22,13 +22,13 @@
 	max-height: 200px;
 }
 
-.queue-heading {
+.noteSet-heading {
 	padding-bottom: 10px;
     border-bottom: solid 1px lightgray;
     margin-bottom: 10px;	
 }
 
-.queue-heading > .setting-item-info > .setting-item-name {
+.noteSet-heading > .setting-item-info > .setting-item-name {
 	font-size: 120% !important;
 }
 

@@ -1,8 +1,8 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
-import { EmptyQueue } from "src/queue/IQueue";
+import { EmptyNoteSet } from "src/noteSet/INoteSet";
 import { JoinLogicOperators } from "src/joinLogicOperators";
-import { QueueInfoModal } from "src/queue/queueInfoModal";
+import { NoteSetInfoModal } from "src/noteSet/noteSetInfoModal";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
@@ -24,8 +24,8 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		// General settings
 
 		new Setting(containerEl)
-			.setName("Open next note in queue after reviewing a note")
-			.setDesc("After marking note as reviewed, automatically open next note in queue.")
+			.setName("Open next note in note set after reviewing a note")
+			.setDesc("After marking note as reviewed, automatically open next note in note set.")
 			.addToggle(toggle => {
 				toggle.setValue(this._plugin.settings.openNextNoteAfterReviewing)
 				.onChange(value => {
@@ -36,7 +36,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Open random note for review")
-			.setDesc("When reviewing, open random note from queue, instead of note with earliest review date.")
+			.setDesc("When reviewing, open random note from note set, instead of note with earliest review date.")
 			.addToggle(toggle => {
 				toggle.setValue(this._plugin.settings.openRandomNote)
 				.onChange(value => {
@@ -46,46 +46,44 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			})
 
 
-		// Queue settings
+		// NoteSet settings
 
-        containerEl.createEl('h3', { text: 'Queues' });
-
-        containerEl.createEl('div', {text: 'A queue is a list of notes waiting for review.'})
+        containerEl.createEl('h3', { text: 'Note Sets' });
 
         this._plugin.settings 
-		&& this._plugin.settings.queues
-		&& this._plugin.settings.queues.forEach(queue => {
-			this._plugin.service.updateQueueDisplayNameAndDescription(queue);
+		&& this._plugin.settings.noteSets
+		&& this._plugin.settings.noteSets.forEach(noteSet => {
+			this._plugin.service.updateNoteSetDisplayNameAndDescription(noteSet);
 
 			// Header
             const header = new Setting(containerEl);
 			const baseSettingIconContainer = createSpan({cls: "simple-note-review-collapse-icon"});
 
 			header.setHeading();
-			header.setClass("queue-heading");
+			header.setClass("noteSet-heading");
 
 			const updateHeader = (text: string): void => {
-				header.setName(`Queue "${text}"`);
+				header.setName(`Note Set "${text}"`);
 				
 				setIcon(baseSettingIconContainer, "right-chevron-glyph");
 				header.nameEl.prepend(baseSettingIconContainer);
 			}
 
-			updateHeader(queue.displayName);
+			updateHeader(noteSet.displayName);
 
 			header.addExtraButton(cb => {
 				cb.setIcon('info')
-				.setTooltip("Queue info & stats")
+				.setTooltip("Note set info & stats")
 				.onClick(() => {
-					new QueueInfoModal(this.app, queue, this._plugin.service).open();
+					new NoteSetInfoModal(this.app, noteSet, this._plugin.service).open();
 				})
 			})
 
 			header.addExtraButton(cb => {
 				cb.setIcon("trash")
-				.setTooltip("Delete queue")
+				.setTooltip("Delete note set")
 				.onClick(async () => {
-					this._plugin.settings.queues = this._plugin.settings.queues.filter(q => q.id !== queue.id);
+					this._plugin.settings.noteSets = this._plugin.settings.noteSets.filter(q => q.id !== noteSet.id);
 					await this._plugin.saveSettings();
 					this.refresh();
 				})
@@ -103,44 +101,44 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			nameSetting.setName("Name");
 			nameSetting.setDesc("If omitted, name will be created from tags/folders.")
             nameSetting.addText(textField => {
-				textField.setValue(queue.name)
-				.setPlaceholder(queue.displayName)
+				textField.setValue(noteSet.name)
+				.setPlaceholder(noteSet.displayName)
 				.onChange(value => {
-					if (value === queue.name) {
+					if (value === noteSet.name) {
 						return;
 					}
-					queue.name = value != "" ? value : null;
+					noteSet.name = value != "" ? value : null;
 					this._plugin.saveSettings();
 					if (value == "") {
-						textField.setPlaceholder(queue.displayName);
+						textField.setPlaceholder(noteSet.displayName);
 					}
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				})
 			});
 
 			const tagsSetting = new Setting(settingBodyEl);
 			tagsSetting.setName("Tags");
-			tagsSetting.setDesc(`One or more tags, separated by comma. Queue will contain notes tagged with ${queue.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these. Example: #review, #knowledge`)			
+			tagsSetting.setDesc(`One or more tags, separated by comma. Note set will contain notes tagged with ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these. Example: #review, #knowledge`)			
 			tagsSetting.addTextArea(textArea => {
-				textArea.setValue(queue.tags ? queue.tags.join(",") : "")
+				textArea.setValue(noteSet.tags ? noteSet.tags.join(",") : "")
 				.setPlaceholder("Tags")
 				.onChange(value => {
-					queue.tags = value != "" ? value.split(',').map(f => f.trim()) : [];
+					noteSet.tags = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				});
 			});
 
 			const foldersSetting = new Setting(settingBodyEl);
 			foldersSetting.setName("Folders");
-			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Queue will contain notes located in any of these. Example: "/notes", "/programming"`)			
+			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Note set will contain notes located in any of these. Example: "/notes", "/programming"`)			
 			foldersSetting.addTextArea(textArea => {
-				textArea.setValue(queue.folders ? queue.folders.join(',') : "")
+				textArea.setValue(noteSet.folders ? noteSet.folders.join(',') : "")
 				.setPlaceholder("Folders")
 				.onChange(value => {
-					queue.folders = value != "" ? value.split(',').map(f => f.trim()) : [];
+					noteSet.folders = value != "" ? value.split(',').map(f => f.trim()) : [];
 					this._plugin.saveSettings();
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				});
 			});
 
@@ -166,11 +164,11 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			tagJoinTypeSetting.addDropdown(dropdown => {
 				dropdown
 				.addOption(JoinLogicOperators.OR, "any of the tags").addOption(JoinLogicOperators.AND, "all of the tags")
-				.setValue(queue.tagsJoinType as string || JoinLogicOperators.OR)
+				.setValue(noteSet.tagsJoinType as string || JoinLogicOperators.OR)
 				.onChange((value: JoinLogicOperators) => {
-					queue.tagsJoinType = value;
+					noteSet.tagsJoinType = value;
 					this._plugin.saveSettings();
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				} )
 			});
 
@@ -178,11 +176,11 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			folderTagJoinTypeSetting.setName("If folders and tags are specified, match notes with: ")
 			folderTagJoinTypeSetting.addDropdown(dropdown => {
 				dropdown.addOption(JoinLogicOperators.OR, "specified tags OR in these folders").addOption(JoinLogicOperators.AND, "specified tags AND in these folders")
-				.setValue(queue.foldersToTagsJoinType as string || JoinLogicOperators.OR)
+				.setValue(noteSet.foldersToTagsJoinType as string || JoinLogicOperators.OR)
 				.onChange((value: JoinLogicOperators) => {
-					queue.foldersToTagsJoinType = value; 
+					noteSet.foldersToTagsJoinType = value; 
 					this._plugin.saveSettings();
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				})
 			});
 
@@ -190,13 +188,13 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			dataviewQuerySetting.setName("DataviewJS query");
 			dataviewQuerySetting.setDesc(`DataviewJS-style query. If used, overrides Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
             dataviewQuerySetting.addTextArea(textArea => {
-				textArea.setValue(queue.dataviewQuery)
+				textArea.setValue(noteSet.dataviewQuery)
 				.setPlaceholder("DataviewJS query")
 				.onChange(value => {
-					queue.dataviewQuery = value;
+					noteSet.dataviewQuery = value;
 					this._plugin.saveSettings();
 					updateTagsFoldersSettingsAvailability(value);
-					updateQueueDisplayName();
+					updateNoteSetDisplayName();
 				});
 			});
 
@@ -215,12 +213,12 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				foldersSetting.setDisabled(disableTagsFoldersSettings);
 			}
 
-			updateTagsFoldersSettingsAvailability(queue.dataviewQuery);
+			updateTagsFoldersSettingsAvailability(noteSet.dataviewQuery);
 
-			const updateQueueDisplayName = (): void => {
+			const updateNoteSetDisplayName = (): void => {
 				const debounced = debounce(() => {
-					this._plugin.service.updateQueueDisplayNameAndDescription(queue);
-					updateHeader(queue.displayName);
+					this._plugin.service.updateNoteSetDisplayNameAndDescription(noteSet);
+					updateHeader(noteSet.displayName);
 				}, 1000);
 				debounced();
 			}
@@ -230,11 +228,11 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
 		.addButton(btn => {
-			btn.setButtonText("Add queue");
+			btn.setButtonText("Add Note Set");
 			btn.onClick(() => {
-				this._plugin.settings.queues.push(
-                        new EmptyQueue(
-							this._plugin.settings.queues.length > 0 ? Math.max(...this._plugin.settings.queues.map(q => q.id)) + 1 : 1), // id "generation"
+				this._plugin.settings.noteSets.push(
+                        new EmptyNoteSet(
+							this._plugin.settings.noteSets.length > 0 ? Math.max(...this._plugin.settings.noteSets.map(q => q.id)) + 1 : 1), // id "generation"
                     );
 				this._plugin.saveSettings();
 				this.refresh();

@@ -1,42 +1,40 @@
-import { IQueue } from "./IQueue";
+import { INoteSet } from "./INoteSet";
 import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "./dataviewService";
-import { QueueInfoService } from "./queueInfoService";
+import { NoteSetInfoService as NoteSetInfoService } from "./noteSetInfoService";
 
 
-export class QueueEmptyError extends Error {
-    message = "Queue is empty";
+export class NoteSetEmptyError extends Error {
+    message = "Note set is empty";
 }
 export class DataviewQueryError extends Error { }
 
-export class QueueService {
+export class NoteSetService {
     private _dataviewService = new DataviewService();
-    private _queueInfoService = new QueueInfoService(this._dataviewService);
+    private _noteSetInfoService = new NoteSetInfoService(this._dataviewService);
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
-    /** Mark note as reviewed today. If setting "open next note in queue after reviewing" is enabled,
-     * open next note in queue (current queue by default).
+    /** Mark note as reviewed today. If setting "open next note in noteSet after reviewing" is enabled,
+     * open next note in noteSet (current noteSet by default).
      * @param  {TAbstractFile} note
-     * @param  {IQueue=this._plugin.settings.currentQueue} queue
+     * @param  {INoteSet=this._plugin.settings.currentnoteSet} noteSet
      * @returns Promise
      */
-
-
-    public updateQueueDisplayNames() {
-        this._plugin.settings.queues.forEach(q => this.updateQueueDisplayNameAndDescription(q));
+    public updateNoteSetDisplayNames() {
+        this._plugin.settings.noteSets.forEach(q => this.updateNoteSetDisplayNameAndDescription(q));
     } 
 
-    public updateQueueDisplayNameAndDescription(queue: IQueue) {
-        this._queueInfoService.updateQueueDisplayNameAndDescription(queue);
+    public updateNoteSetDisplayNameAndDescription(noteSet: INoteSet) {
+        this._noteSetInfoService.updateNoteSetDisplayNameAndDescription(noteSet);
     }
 
-    public updateQueueStats(queue: IQueue) {
-        this._queueInfoService.updateQueueStats(queue);
+    public updateNoteSetStats(noteSet: INoteSet) {
+        this._noteSetInfoService.updateNoteSetStats(noteSet);
     }
 
-    public async reviewNote(note: TAbstractFile, queue: IQueue = this._plugin.settings.currentQueue): Promise<void> {
+    public async reviewNote(note: TAbstractFile, noteSet: INoteSet = this._plugin.settings.currentNoteSet): Promise<void> {
         // "note" must be an actual note, not folder
         if (!(note instanceof TFile))
             return;
@@ -47,17 +45,17 @@ export class QueueService {
         }
         
         if (this._plugin.settings.openNextNoteAfterReviewing) {
-            await this.openNextFile(queue);
+            await this.openNextFile(noteSet);
         }
     }
 
 
-    /** Open next file in queue.
-     * @param  {IQueue} queue
+    /** Open next file in noteSet.
+     * @param  {INoteSet} noteSet
      * @returns Promise
      */
-    public async openNextFile(queue: IQueue): Promise<void> {
-        const filePath = this.getNextFilePath(queue);
+    public async openNextFile(noteSet: INoteSet): Promise<void> {
+        const filePath = this.getNextFilePath(noteSet);
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
@@ -73,19 +71,19 @@ export class QueueService {
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
-    private getNextFilePath(queue: IQueue): string {
-        const pages = this._dataviewService.getQueueFiles(queue);
+    private getNextFilePath(noteSet: INoteSet): string {
+        const pages = this._dataviewService.getNoteSetFiles(noteSet);
         const sorted = pages.sort(x => x[this._plugin.settings.fieldName], "asc").array();
         if (sorted.length > 0) {
             const firstNoteIndex = this._plugin.settings.openRandomNote ? ~~(Math.random() * sorted.length) : 0;
-            const firstInQueue = sorted[firstNoteIndex]["file"]["path"];
+            const firstInnoteSet = sorted[firstNoteIndex]["file"]["path"];
             if (sorted.length === 1) {
-                return firstInQueue;
+                return firstInnoteSet;
             }
-            const nextInQueue = sorted[1]["file"]["path"];
-            return this.pathEqualsCurrentFilePath(firstInQueue) ? nextInQueue : firstInQueue;
+            const nextInnoteSet = sorted[1]["file"]["path"];
+            return this.pathEqualsCurrentFilePath(firstInnoteSet) ? nextInnoteSet : firstInnoteSet;
         } 
-        throw new QueueEmptyError();
+        throw new NoteSetEmptyError();
     }
 
     private pathEqualsCurrentFilePath(path: string): boolean {
