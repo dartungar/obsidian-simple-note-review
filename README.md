@@ -8,14 +8,14 @@ Please make sure you have Dataview plugin installed.
 Build custom note sets for reviewing based on tags, folders, or DataviewJS-style queries.
 Customize note set's name and query logic.
 
-![noteset-settings](https://user-images.githubusercontent.com/36126057/184475626-31bce911-de9f-4afa-863c-8489b6da2cc3.png)
+![noteset-settings](https://user-images.githubusercontent.com/36126057/187531624-08f363d3-3195-4914-bdf1-c19f083dc95a.png)
 
 ### Easy reviewing
 Review notes based on the date they were last reviewed. 
 Notes with no reviewed date will be first in note set.
 Mark notes as rewieved today with one command.
 
-![noteset-select-modal](https://user-images.githubusercontent.com/36126057/184475623-76551710-f945-497e-bb53-499098a03c19.png)
+![noteset-select-modal](https://user-images.githubusercontent.com/36126057/187531666-55f6b7fc-7e14-4184-ac3e-f37843bd3a94.png)
 
 ### Review statistics
 See note set's details: 
@@ -24,4 +24,4 @@ See note set's details:
 - how many notes are reviewed in last 7, 30 days
 - how many notes are not reviewed yet
 
-![noteset-info](https://user-images.githubusercontent.com/36126057/184475652-df894054-208b-40b0-a92a-2304961119e6.png)
+![noteset-info](https://user-images.githubusercontent.com/36126057/187531702-4de555fe-6229-4885-92a1-a591bbc33615.png)
