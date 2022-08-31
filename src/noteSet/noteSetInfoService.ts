@@ -1,6 +1,6 @@
 import { JoinLogicOperators } from "src/joinLogicOperators";
 import { INoteSet } from "./INoteSet";
-import { DataviewService } from "./dataviewService";
+import { DataviewService } from "../dataview/dataviewService";
 
 export class NoteSetInfoService {
 

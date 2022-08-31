@@ -1,8 +1,8 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
 import { JoinLogicOperators } from "src/joinLogicOperators";
-import { NoteSetDeleteModal } from "src/noteSet/noteSetDeleteModal";
-import { NoteSetInfoModal } from "src/noteSet/noteSetInfoModal";
+import { NoteSetDeleteModal } from "src/UI/noteSetDeleteModal";
+import { NoteSetInfoModal } from "src/UI/noteSetInfoModal";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 

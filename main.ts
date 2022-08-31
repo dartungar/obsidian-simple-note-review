@@ -2,7 +2,7 @@ import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 import { getAPI } from 'obsidian-dataview';
 import { addSimpleNoteReviewIcon } from 'src/icon';
 import { NoteSetService } from 'src/noteSet/noteSetService';
-import { SelectNoteSetModal } from 'src/noteSet/selectNoteSetModal';
+import { SelectNoteSetModal } from 'src/UI/selectNoteSetModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
 import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
 

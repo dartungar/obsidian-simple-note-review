@@ -1,6 +1,6 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, SuggestModal } from "obsidian";
-import { INoteSet } from "./INoteSet";
+import { INoteSet } from "../noteSet/INoteSet";
 
 export class SelectNoteSetModal extends SuggestModal<INoteSet> {
     /**

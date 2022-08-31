@@ -1,8 +1,9 @@
 import { EmptyNoteSet, INoteSet } from "./INoteSet";
 import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
-import { DataviewService } from "./dataviewService";
+import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService as NoteSetInfoService } from "./noteSetInfoService";
+import { MetadataService } from "src/utils/metadataService";
 
 
 export class NoteSetEmptyError extends Error {
@@ -13,6 +14,7 @@ export class DataviewQueryError extends Error { }
 export class NoteSetService {
     private _dataviewService = new DataviewService();
     private _noteSetInfoService = new NoteSetInfoService(this._dataviewService);
+    private _metadataService = new MetadataService(this._app);
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
@@ -23,7 +25,7 @@ export class NoteSetService {
                 ? Math.max(...this._plugin.settings.noteSets.map(q => q.id)) + 1 
                 : 1), // id "generation"
         );
-    await this._plugin.saveSettings();
+        await this._plugin.saveSettings();
     }
 
     public async deleteNoteSet(noteSet: INoteSet) {
@@ -82,7 +84,7 @@ export class NoteSetService {
      */
     public async setMetadataValueToToday(file: TFile): Promise<void> {
         const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
-        await this.changeOrAddMetadataValue(file, todayString);
+        await this._metadataService.setMetadataFieldValue(file, this._plugin.settings.fieldName, todayString);
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
@@ -104,29 +106,4 @@ export class NoteSetService {
     private pathEqualsCurrentFilePath(path: string): boolean {
         return path === this._app.workspace.getActiveFile().path;
     }
-
-    // TODO: check if async works / is really needed
-    // TODO: do not mangle metadata
-    private async changeOrAddMetadataValue(file: TFile = null, value: string): Promise<void> {
-        const newFieldValue = `${this._plugin.settings.fieldName}: ${value}`;
-        const fileContentSplit = (await this._app.vault.read(file)).split("\n");
-        const page = this._dataviewService.getPageFromPath(file.path);
-        if (!page[this._plugin.settings.fieldName]) {
-            if (fileContentSplit[0] !== "---") {
-                fileContentSplit.unshift("---");
-                fileContentSplit.unshift("---");
-            }
-            fileContentSplit.splice(1, 0, newFieldValue);
-
-            await this._app.vault.modify(file, fileContentSplit.join("\n"));
-            return;
-        } 
-
-        const newContent = fileContentSplit.map(line => {
-            if (!line.startsWith(this._plugin.settings.fieldName)) return line; // TODO: more precise matching
-            return newFieldValue;
-        });
-        await this._app.vault.modify(file, newContent.join("\n"));
-    }
-
 }

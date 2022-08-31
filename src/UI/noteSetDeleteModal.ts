@@ -1,7 +1,7 @@
 import { App, Modal } from "obsidian";
 import { SimpleNoteReviewPluginSettingsTab } from "src/settings/settingsTab";
-import { INoteSet } from "./INoteSet";
-import { NoteSetService } from "./noteSetService";
+import { INoteSet } from "../noteSet/INoteSet";
+import { NoteSetService } from "../noteSet/noteSetService";
 
 export class NoteSetDeleteModal extends Modal {
 

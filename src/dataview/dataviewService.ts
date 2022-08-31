@@ -1,7 +1,7 @@
 import { DataArray } from "obsidian-dataview";
 import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
-import { INoteSet } from "./INoteSet";
-import { DataviewQueryError } from "./noteSetService";
+import { INoteSet } from "../noteSet/INoteSet";
+import { DataviewQueryError } from "../noteSet/noteSetService";
 
 
 export class DataviewService {
