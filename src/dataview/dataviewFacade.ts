@@ -31,8 +31,12 @@ export class DataviewFacade {
         return this._api.page(filepath);
     }
 
-    private throwIfDataviewNotInstalled() {
+    public getMetadataFieldValue(filepath: string, fieldName: string): string {
+        const page = this.page(filepath);
+        return page[fieldName];
+    }
 
+    private throwIfDataviewNotInstalled() {
         if (!this.isDataviewInstalled)
             throw new DataviewNotInstalledError();
     }

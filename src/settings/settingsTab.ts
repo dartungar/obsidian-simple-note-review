@@ -1,8 +1,9 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
-import { JoinLogicOperators } from "src/joinLogicOperators";
+import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 import { NoteSetDeleteModal } from "src/UI/noteSetDeleteModal";
 import { NoteSetInfoModal } from "src/UI/noteSetInfoModal";
+import { ReviewAlgorithm } from "./reviewAlgorightms";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
@@ -35,16 +36,29 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Open random note for review")
-			.setDesc("When reviewing, open a random note from the note set, instead of a note with earliest review date.")
+			.setName("Use review frequency")
+			.setDesc("Set review frequency level (high, normal, low, ignore) for each note. Notes with higher review frequency will be presented for review more often. Default is 'normal'.")
 			.addToggle(toggle => {
-				toggle.setValue(this._plugin.settings.openRandomNote)
+				toggle.setValue(this._plugin.settings.useReviewFrequency)
 				.onChange(value => {
-					this._plugin.settings.openRandomNote = value;
+					this._plugin.settings.useReviewFrequency = value;
 					this._plugin.saveSettings;
 				})
 			})
 
+		new Setting(containerEl)
+			.setName("Review algorithm")
+			.setDesc("Algorithm used for determining the order of notes for review. Default is (days elapsed since last review * (frequency ** 2)).")
+			.addDropdown(dropdown => {
+				dropdown
+				.addOption(ReviewAlgorithm.default, "default")
+				.addOption(ReviewAlgorithm.random, "random")
+				.setValue(ReviewAlgorithm.default)
+				.onChange((value: ReviewAlgorithm) => {
+					this._plugin.settings.reviewAlgorithm = value;
+					this._plugin.saveSettings();
+				})
+			});
 
 		// NoteSet settings
 
@@ -175,7 +189,8 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 			tagJoinTypeSetting.setName("If tags are specified, match notes with:")
 			tagJoinTypeSetting.addDropdown(dropdown => {
 				dropdown
-				.addOption(JoinLogicOperators.OR, "any of the tags").addOption(JoinLogicOperators.AND, "all of the tags")
+				.addOption(JoinLogicOperators.OR, "any of the tags")
+				.addOption(JoinLogicOperators.AND, "all of the tags")
 				.setValue(noteSet.tagsJoinType as string || JoinLogicOperators.OR)
 				.onChange((value: JoinLogicOperators) => {
 					noteSet.tagsJoinType = value;

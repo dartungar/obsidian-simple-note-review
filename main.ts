@@ -1,10 +1,11 @@
 import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 import { getAPI } from 'obsidian-dataview';
-import { addSimpleNoteReviewIcon } from 'src/icon';
+import { addSimpleNoteReviewIcon } from 'src/UI/icon';
 import { NoteSetService } from 'src/noteSet/noteSetService';
 import { SelectNoteSetModal } from 'src/UI/selectNoteSetModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
 import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
+import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
@@ -42,6 +43,38 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "Mark Note As Reviewed Today",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
 				await this.service.reviewNote(view.file);
+			})
+		});
+
+		this.addCommand({
+			id: "set-review-frequency-high",
+			name: "Set review frequency to high",
+			editorCallback: (async (editor: Editor, view: MarkdownView) => {
+				await this.service.setReviewedFrequency(view.file, ReviewFrequency.high);
+			})
+		});
+
+		this.addCommand({
+			id: "set-review-frequency-normal",
+			name: "Set review frequency to normal",
+			editorCallback: (async (editor: Editor, view: MarkdownView) => {
+				await this.service.setReviewedFrequency(view.file, ReviewFrequency.normal);
+			})
+		});
+
+		this.addCommand({
+			id: "set-review-frequency-low",
+			name: "Set review frequency to low",
+			editorCallback: (async (editor: Editor, view: MarkdownView) => {
+				await this.service.setReviewedFrequency(view.file, ReviewFrequency.low);
+			})
+		});
+
+		this.addCommand({
+			id: "set-review-frequency-ignore",
+			name: "Set review frequency to none (ignore this note)",
+			editorCallback: (async (editor: Editor, view: MarkdownView) => {
+				await this.service.setReviewedFrequency(view.file, ReviewFrequency.ignore);
 			})
 		});
 

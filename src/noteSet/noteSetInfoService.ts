@@ -1,18 +1,20 @@
-import { JoinLogicOperators } from "src/joinLogicOperators";
+import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 import { INoteSet } from "./INoteSet";
 import { DataviewService } from "../dataview/dataviewService";
+import { getDateOffsetByNDays } from "src/utils/dateUtils";
 
 export class NoteSetInfoService {
 
     constructor(private _dataviewService: DataviewService) {  }
 
+    // TODO: p.reviewed -> p.[setting for field name] !!
     public updateNoteSetStats(noteSet: INoteSet) {
         const pages = this._dataviewService.getNoteSetFiles(noteSet);
         noteSet.stats = {
             totalCount: pages.length,
             notRewiewedCount: pages.where(p => !p.reviewed).length, 
-            reviewedLastSevenDaysCount: pages.where(p => p.reviewed > this.getDateOffsetByNDays(7)).length,
-            reviewedLastThirtyDaysCount: pages.where(p => p.reviewed > this.getDateOffsetByNDays(30)).length
+            reviewedLastSevenDaysCount: pages.where(p => p.reviewed > getDateOffsetByNDays(7)).length,
+            reviewedLastThirtyDaysCount: pages.where(p => p.reviewed > getDateOffsetByNDays(30)).length
         }
     }
 
@@ -21,10 +23,6 @@ export class NoteSetInfoService {
         noteSet.description = this.getNoteSetDescription(noteSet);
     }
 
-    /** Get display name (set by user or generated from noteSet parameters)
-    * @param  {INoteSet} noteSet
-    * @returns noteSet's display name
-    */
     private getNoteSetDisplayName(noteSet: INoteSet): string {
         if (noteSet.name && noteSet.name !== "" ) {
             return noteSet.name;
@@ -33,10 +31,6 @@ export class NoteSetInfoService {
         return alias && alias != "" ? alias : "blank note set";
     }
 
-    /** Get noteSet's description (what notes are matched with its parameters)
-    * @param  {INoteSet} noteSet
-    * @returns string
-    */
     private getNoteSetDescription(noteSet: INoteSet): string {
 
         if (!this._dataviewService.getOrCreateBaseDataviewQuery(noteSet)) {
@@ -58,10 +52,5 @@ export class NoteSetInfoService {
         return desc;
     }
 
-    private getDateOffsetByNDays(days: number): Date {
-        const today = new Date();
-        const offsetDate = new Date();
-        offsetDate.setDate(today.getDate() - days);
-        return offsetDate;
-    }
+
 }
