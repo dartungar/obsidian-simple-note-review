@@ -25,6 +25,7 @@ You can optionally set each note's review frequency:
 - ignore
 
 ### Review algorithms
+![note-review-frequency](https://user-images.githubusercontent.com/36126057/192049630-bb1455eb-e2b1-4abd-9440-beb8dfac7818.png)
 ##### Default
 Makes notes with earlier review dates appear first.
 If review frequency is set, notes with higher review frequency will rank significantly higher than those with lower review frequency.
