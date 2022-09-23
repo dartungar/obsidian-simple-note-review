@@ -17,6 +17,20 @@ Mark notes as rewieved today with one command.
 
 ![noteset-select-modal](https://user-images.githubusercontent.com/36126057/184475623-76551710-f945-497e-bb53-499098a03c19.png)
 
+### Review frequency
+You can optionally set each note's review frequency:
+- high
+- normal
+- low
+- ignore
+
+### Review algorithms
+##### Default
+Makes notes with earlier review dates appear first.
+If review frequency is set, notes with higher review frequency will rank significantly higher than those with lower review frequency.
+##### Random
+Takes a random note from the current set.
+
 ### Review statistics
 See note set's details: 
 - what notes are included in the set

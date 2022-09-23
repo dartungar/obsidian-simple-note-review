@@ -47,8 +47,12 @@ export class DataviewService {
         return null;
     }
 
-    public getPageFromPath(path: string): Record<string, any> {
-        return this._dataviewApi.page(path);
+    public getPageFromPath(filepath: string): Record<string, any> {
+        return this._dataviewApi.page(filepath);
+    }
+
+    public getMetadataFieldValue(filepath: string, fieldName: string): string {
+        return this._dataviewApi.getMetadataFieldValue(filepath, fieldName);
     }
 
     

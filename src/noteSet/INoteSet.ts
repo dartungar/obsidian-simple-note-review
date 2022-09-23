@@ -1,6 +1,6 @@
 // TODO: frontmatter keys
 
-import { JoinLogicOperators } from "../joinLogicOperators"
+import { JoinLogicOperators } from "../settings/joinLogicOperators"
 import { INoteSetStats } from "./INoteSetStats"
 
 // TODO: excluded tags, folders, frontmatter keys
