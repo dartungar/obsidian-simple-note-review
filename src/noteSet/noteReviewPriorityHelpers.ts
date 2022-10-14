@@ -2,15 +2,6 @@ import SimpleNoteReviewPlugin from "main";
 import { ReviewFrequency } from "./reviewFrequency";
 import { getNumberOfDaysFromToday } from "src/utils/dateUtils";
 
-
-export enum NoteReviewPriority {
-    priority1,
-    priority2,
-    priority3,
-    priority4,
-    priority5
-}
-
 /** Calculate Note review priority score. (days elapsed from last review * (review frequency rank ** 2))
  * @param  {SimpleNoteReviewPlugin} plugin
  * @param  {Record<string, any>} note
@@ -47,7 +38,7 @@ export function calculateNoteReviewPriority(plugin: SimpleNoteReviewPlugin, note
     let multiplier = 1;
 
     if (note[reviewedFieldName] == null) 
-        multiplier = 6;
+        multiplier = 100;
     else 
         multiplier = getNumberOfDaysFromToday(note[reviewedFieldName]);
 
