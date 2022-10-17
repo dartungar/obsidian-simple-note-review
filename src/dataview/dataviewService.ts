@@ -7,11 +7,11 @@ import { DataviewQueryError } from "../noteSet/noteSetService";
 export class DataviewService {
     private _dataviewApi = new DataviewFacade();
 
-    public getNoteSetFiles(noteSet: INoteSet): DataArray<Record<string, any>> {
+    public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<Record<string, any>>> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {
-            return this._dataviewApi.pages(query);
+            return await this._dataviewApi.pages(query);
         } catch (error) {
             if (error instanceof DataviewNotInstalledError) {
                 throw error;
@@ -51,8 +51,8 @@ export class DataviewService {
         return this._dataviewApi.page(filepath);
     }
 
-    public getMetadataFieldValue(filepath: string, fieldName: string): string {
-        return this._dataviewApi.getMetadataFieldValue(filepath, fieldName);
+    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<string> {
+        return await this._dataviewApi.getMetadataFieldValue(filepath, fieldName);
     }
 
     

@@ -8,8 +8,8 @@ export class NoteSetInfoService {
     constructor(private _dataviewService: DataviewService) {  }
 
     // TODO: p.reviewed -> p.[setting for field name] !!
-    public updateNoteSetStats(noteSet: INoteSet) {
-        const pages = this._dataviewService.getNoteSetFiles(noteSet);
+    public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
+        const pages = await this._dataviewService.getNoteSetFiles(noteSet);
         noteSet.stats = {
             totalCount: pages.length,
             notRewiewedCount: pages.where(p => !p.reviewed).length, 

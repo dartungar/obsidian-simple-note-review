@@ -39,6 +39,7 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
             this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
             await this._plugin.service.openNextFile(noteSet);
         } catch (error) {
+            console.error(error.message);
             this._plugin.showNotice(error.message);
             this.open();
         } 
