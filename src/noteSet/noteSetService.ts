@@ -81,7 +81,7 @@ export class NoteSetService {
      * @returns Promise
      */
     public async openNextFile(noteSet: INoteSet): Promise<void> {
-        const filePath = this.getNextFilePath(noteSet);
+        const filePath = await this.getNextFilePath(noteSet);
         const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
@@ -97,6 +97,7 @@ export class NoteSetService {
                 });
         } catch (error) {
             this._plugin.showNotice(error.message);
+            throw error;
         }
     }
 
@@ -109,7 +110,7 @@ export class NoteSetService {
         }];
 
         if (this._plugin.settings.useReviewFrequency) {
-            const reviewFrequency = this.getReviewFrequency(file);
+            const reviewFrequency = await this.getReviewFrequency(file);
             fieldsToSet.push({
                     name: this._plugin.settings.reviewFrequencyFieldName,
                     value: reviewFrequency ?? ReviewFrequency.normal
@@ -121,8 +122,8 @@ export class NoteSetService {
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
-    private getReviewFrequency(file: TFile): ReviewFrequency | null {
-        const frequencyValue = this._dataviewService.getMetadataFieldValue(
+    private async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
+        const frequencyValue = await this._dataviewService.getMetadataFieldValue(
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 
         switch (frequencyValue) {
@@ -139,9 +140,9 @@ export class NoteSetService {
         }
     }
 
-    private getNextFilePath(noteSet: INoteSet): string {
+    private async getNextFilePath(noteSet: INoteSet): Promise<string> {
         const reviewedFieldName = this._plugin.settings.reviewedFieldName;
-        const pages = this._dataviewService.getNoteSetFiles(noteSet);
+        const pages = await this._dataviewService.getNoteSetFiles(noteSet);
         let sorted: DataArray<Record<string, any>>;
 
         if (this._plugin.settings.useReviewFrequency) { 
