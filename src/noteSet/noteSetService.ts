@@ -13,6 +13,10 @@ import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
 export class NoteSetEmptyError extends Error {
     message = "Note set is empty";
 }
+export class OpenNextFileInNoteSetError extends Error {
+    message = "Could not open file for review"
+}
+
 export class DataviewQueryError extends Error { }
 
 export class NoteSetService {

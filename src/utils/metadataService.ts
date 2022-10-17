@@ -54,7 +54,7 @@ export class MetadataService {
             const partBefore = metadata[1];
             newFileContent = fileContent.replace(FRONTMATTER_REGEX, `---\n${partBefore}${fieldText}---`)
         } else {
-            newFileContent = `---\n${fieldText}---\n\n${fileContent}}`;
+            newFileContent = `---\n${fieldText}---\n\n${fileContent}`;
         }
 
         return newFileContent;
