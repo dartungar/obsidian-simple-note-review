@@ -1,7 +1,7 @@
 import { App, TFile } from "obsidian";
 
 // matches whole YAML frontmatter
-const FRONTMATTER_REGEX = /^---\n((?:.*\n)*?)---/;
+const FRONTMATTER_REGEX = /^---\r?\n((?:.*\r?\n)+)---/;
 // matches any number of fields in frontmatter
 const FIELDS_REGEX_PART = '((?:.*\n)*)';
 
@@ -58,15 +58,6 @@ export class MetadataService {
         }
 
         return newFileContent;
-    }
-
-
-    // forgive me, Lord, for I have created a monster
-    private createFieldsRegex(fields: IMetadataField[]): RegExp {
-        //eslint-disable-next-line
-        const fieldStrings = fields.map(f => this.createSingleFieldRegexString(f.name));
-        const joined = fieldStrings.join(FIELDS_REGEX_PART);
-        return new RegExp(`---\n(?:${joined})---`);
     }
 
     private createSingleFieldRegexString(fieldName: string): string {
