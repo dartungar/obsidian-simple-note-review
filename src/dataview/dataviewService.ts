@@ -16,7 +16,8 @@ export class DataviewService {
             if (error instanceof DataviewNotInstalledError) {
                 throw error;
             } else {
-                throw new DataviewQueryError(`Query "${query}" contains errors. Please check settings for the current noteSet.`)
+                console.error(`Simple Note Review - dataview API error: ${error.message}`);
+                throw new DataviewQueryError(`Error while trying to get next note in noteset "${query}" via Dataview API. Please check noteset settings and/or disabling and enabling Simple Note Review plugin again.`)
             }
         }
     }
