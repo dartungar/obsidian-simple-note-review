@@ -142,7 +142,9 @@ export class NoteSetService {
 
     private async getNextFilePath(noteSet: INoteSet): Promise<string> {
         const reviewedFieldName = this._plugin.settings.reviewedFieldName;
-        const pages = await this._dataviewService.getNoteSetFiles(noteSet);
+        const freqFieldname = this._plugin.settings.reviewFrequencyFieldName;
+        const pages = (await this._dataviewService.getNoteSetFiles(noteSet))
+                        .filter(x => x[freqFieldname] !== ReviewFrequency.ignore);
         let sorted: DataArray<Record<string, any>>;
 
         if (this._plugin.settings.useReviewFrequency) { 
@@ -162,12 +164,13 @@ export class NoteSetService {
                     firstNoteIndex = 0;
                     break;
             }
-            const firstInnoteSet = sorted[firstNoteIndex]["file"]["path"];
+            const firstInNoteSet = sorted[firstNoteIndex]["file"]["path"];
             if (sorted.length === 1) {
-                return firstInnoteSet;
+                return firstInNoteSet;
             }
             const nextInnoteSet = sorted[1]["file"]["path"];
-            return this.pathEqualsCurrentFilePath(firstInnoteSet) ? nextInnoteSet : firstInnoteSet;
+            // sometimes DV cache does not update in time so we have to take next note in set
+            return this.pathEqualsCurrentFilePath(firstInNoteSet) ? nextInnoteSet : firstInNoteSet;
         } 
         throw new NoteSetEmptyError();
     }

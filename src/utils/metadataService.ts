@@ -1,7 +1,7 @@
 import { App, TFile } from "obsidian";
 
 // matches whole YAML frontmatter
-const FRONTMATTER_REGEX = /^---\r?\n((?:.*\r?\n)+)---/;
+const FRONTMATTER_REGEX = /^---\r?\n((?:.*\r?\n)+?)---/;
 // matches any number of fields in frontmatter
 const FIELDS_REGEX_PART = '((?:.*\n)*)';
 
