@@ -31,7 +31,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				toggle.setValue(this._plugin.settings.openNextNoteAfterReviewing)
 				.onChange(value => {
 					this._plugin.settings.openNextNoteAfterReviewing = value;
-					this._plugin.saveSettings;
+					this._plugin.saveSettings();
 				})
 			})
 
@@ -42,7 +42,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				toggle.setValue(this._plugin.settings.useReviewFrequency)
 				.onChange(value => {
 					this._plugin.settings.useReviewFrequency = value;
-					this._plugin.saveSettings;
+					this._plugin.saveSettings();
 				})
 			})
 
