@@ -8,7 +8,7 @@ Please make sure you have Dataview plugin installed.
 Build custom note sets for reviewing based on tags, folders, or DataviewJS-style queries.
 Customize note set's name and query logic.
 
-![noteset-settings](https://user-images.githubusercontent.com/36126057/187531624-08f363d3-3195-4914-bdf1-c19f083dc95a.png)
+![noteset-settings](https://user-images.githubusercontent.com/13811500/201546449-0af569e8-2c0b-4716-8728-64ce6c9dc830.png)
 
 ### Easy reviewing
 Review notes based on the date they were last reviewed. 
