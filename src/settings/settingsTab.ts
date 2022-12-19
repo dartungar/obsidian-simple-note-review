@@ -157,7 +157,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 			const foldersSetting = new Setting(settingBodyEl);
 			foldersSetting.setName("Folders");
-			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Note set will contain notes located in any of these. Example: "/notes", "/programming"`)			
+			foldersSetting.setDesc(`One or more folder paths relative to vault root, surrounded by quotes and separated by comma. Note set will contain notes located in any of these. Top-level folders must not contain slash in their path.  Example: "notes", "notes/programming"`)			
 			foldersSetting.addTextArea(textArea => {
 				textArea.setValue(noteSet.folders ? noteSet.folders.join(',') : "")
 				.setPlaceholder("Folders")
