@@ -164,11 +164,15 @@ export class NoteSetService {
                     firstNoteIndex = 0;
                     break;
             }
-            const firstInNoteSet = sorted[firstNoteIndex]["file"]["path"];
+            const firstInNoteSet = sorted[firstNoteIndex]?.file?.path;
+
+            if (!firstInNoteSet)
+                throw new NoteSetEmptyError();
+
             if (sorted.length === 1) {
                 return firstInNoteSet;
             }
-            const nextInnoteSet = sorted[1]["file"]["path"];
+            const nextInnoteSet = sorted[1]?.file?.path;
             // sometimes DV cache does not update in time so we have to take next note in set
             return this.pathEqualsCurrentFilePath(firstInNoteSet) ? nextInnoteSet : firstInNoteSet;
         } 
