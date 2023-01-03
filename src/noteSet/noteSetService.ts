@@ -11,10 +11,10 @@ import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
 
 
 export class NoteSetEmptyError extends Error {
-    message = "Note set is empty";
+    message = "Could not get the next note in note set. Please check note set settings and make sure it has notes.";
 }
 export class OpenNextFileInNoteSetError extends Error {
-    message = "Could not open file for review"
+    message = "Could not open next note in note set. If this keeps happening, please try to disable and enable plugin. If that fails, try to restart Obsidian."
 }
 
 export class DataviewQueryError extends Error { }
@@ -164,22 +164,22 @@ export class NoteSetService {
                     firstNoteIndex = 0;
                     break;
             }
-            const firstInNoteSet = sorted[firstNoteIndex]?.file?.path;
+            const firstInNoteSetPath = sorted[firstNoteIndex]?.file?.path;
 
-            if (!firstInNoteSet)
-                throw new NoteSetEmptyError();
+            if (!firstInNoteSetPath)
+                throw new OpenNextFileInNoteSetError();
 
             if (sorted.length === 1) {
-                return firstInNoteSet;
+                return firstInNoteSetPath;
             }
-            const nextInnoteSet = sorted[1]?.file?.path;
+            const nextInnoteSetPath = sorted[1]?.file?.path;
             // sometimes DV cache does not update in time so we have to take next note in set
-            return this.pathEqualsCurrentFilePath(firstInNoteSet) ? nextInnoteSet : firstInNoteSet;
+            return this.pathEqualsCurrentFilePath(firstInNoteSetPath) ? nextInnoteSetPath : firstInNoteSetPath;
         } 
         throw new NoteSetEmptyError();
     }
 
     private pathEqualsCurrentFilePath(path: string): boolean {
-        return path === this._app.workspace.getActiveFile().path;
+        return path === this._app.workspace.getActiveFile()?.path;
     }
 }

@@ -10,7 +10,7 @@ import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
 	service: NoteSetService = new NoteSetService(this.app, this);
-	readonly openModalIconName: string = "simple-note-review-icon";
+	readonly openModalIconName: string = "glasses";
 	readonly markAsReviewedIconName: string = "checkmark";
 
 	async onload() {
@@ -22,7 +22,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		addSimpleNoteReviewIcon();
+		//addSimpleNoteReviewIcon();
 
 		this.service.updateNoteSetDisplayNames();
 
