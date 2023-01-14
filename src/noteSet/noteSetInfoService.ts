@@ -33,23 +33,41 @@ export class NoteSetInfoService {
 
     private getNoteSetDescription(noteSet: INoteSet): string {
 
-        if (!this._dataviewService.getOrCreateBaseDataviewQuery(noteSet)) {
+        if (this.queryMatchesAllNotes(noteSet)) {
             return "matches all notes"
         }
 
-        let desc = "matches notes that ";
+        let desc: string[] = [];
+
         if (noteSet.dataviewQuery && noteSet.dataviewQuery !== "") {
-            desc += `are matched with dataviewJS query ${noteSet.dataviewQuery}`;
-            return desc;
+            desc.push(`are matched with dataviewJS query ${noteSet.dataviewQuery}; `);
         }
+
         if (noteSet.tags && noteSet.tags?.length > 0) {
-            desc += `contain ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${noteSet.tags.join(", ")}`;
-            if (noteSet.folders && noteSet.folders?.length > 0) desc += ` ${noteSet.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
+            let tagString = `contain ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${noteSet.tags.join(", ")}`;
+            if (noteSet.folders && noteSet.folders?.length > 0) {
+                tagString += ` ${noteSet.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
+            } 
+            desc.push(tagString);
         }
+
         if (noteSet.folders && noteSet.folders?.length > 0) {
-            desc += `are inside any of these folders (including nested folders): ${noteSet.folders.join(", ")}`;
+            desc.push(`are inside any of these folders (including nested folders): ${noteSet.folders.join(", ")}`);
         }
-        return desc;
+
+        if (noteSet.createdInLastNDays) {
+            desc.push(`are created in the last ${noteSet.createdInLastNDays} days`);
+        }
+
+        if (noteSet.modifiedInLastNDays) {
+            desc.push(`are modified in the last ${noteSet.modifiedInLastNDays} days`);
+        }
+
+        return `matches notes that:  ` + desc.join("; ");
+    }
+
+    private queryMatchesAllNotes(noteset: INoteSet): boolean {
+        return !(this._dataviewService.getOrCreateBaseDataviewQuery(noteset) || noteset.createdInLastNDays || noteset.createdInLastNDays);
     }
 
 

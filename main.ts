@@ -22,13 +22,97 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		//addSimpleNoteReviewIcon();
-
 		this.service.updateNoteSetDisplayNames();
 
-		this.addRibbonIcon(this.openModalIconName, "Simple Note Review", (evt: MouseEvent) => {
+		this.addRibbonIcon(this.openModalIconName, "Simple Note Review: Select Note Set", (evt: MouseEvent) => {
 			new SelectNoteSetModal(this.app, this).open();
 		})
+
+		this.addRibbonIcon("play-circle", "Simple Note Review: Start Reviewing", (evt: MouseEvent) => {
+			this.startReview();
+		});
+
+		this.addCommands();
+
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+				menu.addItem((item) => {
+					item
+					.setTitle("Mark Note As Reviewed Today")
+					.setIcon(this.markAsReviewedIconName)
+					.onClick(async () => {
+						await this.service.reviewNote(view.file);
+					});
+				});
+			})
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file) => {
+				menu.addItem((item) => {
+					item
+					.setTitle("Mark Note As Reviewed Today")
+					.setIcon(this.markAsReviewedIconName)
+					.onClick(async () => {
+						await this.service.reviewNote(file);
+					});
+				});
+			})
+		);
+
+		
+
+		this.addSettingTab(new SimpleNoteReviewPluginSettingsTab(this, this.app));
+	}
+
+	onunload() {
+
+	}
+
+
+	public async startReview(): Promise<void> {
+        let currentNoteSet = this.settings.currentNoteSet;
+        if (!currentNoteSet) {
+			new SelectNoteSetModal(this.app, this).open();
+			return;
+        }
+
+		this.showNotice(`Reviewing note set "${this.settings.currentNoteSet.displayName}"`);
+        this.service.openNextFile(currentNoteSet);
+    }
+
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			new DefaultSettings(),
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
+	public showNotice(message: string) : void {
+		new Notice(message);
+	}
+
+	private dataviewIsInstalled(): boolean {
+		return !!getAPI();
+	} 
+
+	private addCommands(): void {
+		this.addCommand({
+			id: "start-review",
+			name: "Start reviewing notes",
+			callback: () => this.startReview(),
+		});
+
+		this.addCommand({
+			id: "continue-review",
+			name: "Continue reviewing notes",
+			callback: () => this.startReview(),
+		});
 
 		this.addCommand({
 			id: "open-modal",
@@ -77,57 +161,5 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 				await this.service.setReviewedFrequency(view.file, ReviewFrequency.ignore);
 			})
 		});
-
-		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu, editor, view) => {
-				menu.addItem((item) => {
-					item
-					.setTitle("Mark Note As Reviewed Today")
-					.setIcon(this.markAsReviewedIconName)
-					.onClick(async () => {
-						await this.service.reviewNote(view.file);
-					});
-				});
-			})
-		);
-
-		this.registerEvent(
-			this.app.workspace.on("file-menu", (menu, file) => {
-				menu.addItem((item) => {
-					item
-					.setTitle("Mark Note As Reviewed Today")
-					.setIcon(this.markAsReviewedIconName)
-					.onClick(async () => {
-						await this.service.reviewNote(file);
-					});
-				});
-			})
-		);
-
-		this.addSettingTab(new SimpleNoteReviewPluginSettingsTab(this, this.app));
 	}
-
-	onunload() {
-
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			new DefaultSettings(),
-			await this.loadData()
-		);
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
-	public showNotice(message: string) : void {
-		new Notice(message);
-	}
-
-	private dataviewIsInstalled(): boolean {
-		return !!getAPI();
-	} 
 }

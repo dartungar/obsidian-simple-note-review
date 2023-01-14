@@ -168,6 +168,35 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				});
 			});
 
+			const createdDateSetting = new Setting(settingBodyEl);
+			createdDateSetting.setName("Created in last N days");
+			createdDateSetting.setDesc(`Number of days`);			
+			createdDateSetting.addText(text => {
+				text.inputEl.type = 'number';
+				text.setValue(`${noteSet.createdInLastNDays}`);
+				text.onChange(async (val) => {
+					noteSet.createdInLastNDays = parseInt(val);
+					this._plugin.saveSettings();
+					updateNoteSetDisplayName();
+				} );
+			  });
+
+			const modifiedDateSetting = new Setting(settingBodyEl);
+			modifiedDateSetting.setName("Modified in last N days");
+			modifiedDateSetting.setDesc(`Number of days`);			
+			modifiedDateSetting.addText(text => {
+				text.inputEl.type = 'number';
+				text.setValue(`${noteSet.modifiedInLastNDays}`);
+				text.onChange(async (val) => {
+					noteSet.modifiedInLastNDays = parseInt(val);
+					this._plugin.saveSettings();
+					updateNoteSetDisplayName();
+				} );
+			});
+
+
+
+
 			// Advanced Settings
 
 			const advancedSectionHeader = new Setting(settingBodyEl);

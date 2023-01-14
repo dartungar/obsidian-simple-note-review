@@ -76,6 +76,8 @@ export class NoteSetService {
     }
 
 
+
+
     /** Open next file in noteSet.
      * @param  {INoteSet} noteSet
      * @returns Promise

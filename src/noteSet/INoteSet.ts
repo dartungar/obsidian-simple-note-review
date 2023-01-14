@@ -13,6 +13,8 @@ export interface INoteSet {
     tagsJoinType: JoinLogicOperators
     folders: string[]
     foldersToTagsJoinType: JoinLogicOperators
+    createdInLastNDays: number | undefined
+    modifiedInLastNDays: number | undefined
     dataviewQuery: string
     stats: INoteSetStats
 }
@@ -26,6 +28,8 @@ export class EmptyNoteSet implements INoteSet {
     tagsJoinType: JoinLogicOperators.OR
     folders: []
     foldersToTagsJoinType: JoinLogicOperators.OR
+    createdInLastNDays: undefined
+    modifiedInLastNDays: undefined
     dataviewQuery: ""
     stats: INoteSetStats
 

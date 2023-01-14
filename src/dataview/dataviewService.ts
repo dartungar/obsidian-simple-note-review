@@ -1,5 +1,6 @@
 import { DataArray } from "obsidian-dataview";
 import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
+import { getDateOffsetByNDays } from "src/utils/dateUtils";
 import { INoteSet } from "../noteSet/INoteSet";
 import { DataviewQueryError } from "../noteSet/noteSetService";
 
@@ -8,10 +9,16 @@ export class DataviewService {
     private _dataviewApi = new DataviewFacade();
 
     public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<Record<string, any>>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {
-            return await this._dataviewApi.pages(query);
+            let pages = await this._dataviewApi.pages(query);
+            if (noteSet.createdInLastNDays) {
+                pages = pages.where(p => p.file.cday > getDateOffsetByNDays(noteSet.createdInLastNDays)); 
+            }
+            if (noteSet.modifiedInLastNDays) {
+                pages = pages.where(p => p.file.mday > getDateOffsetByNDays(noteSet.modifiedInLastNDays));
+            }
+            return pages;
         } catch (error) {
             if (error instanceof DataviewNotInstalledError) {
                 throw error;
