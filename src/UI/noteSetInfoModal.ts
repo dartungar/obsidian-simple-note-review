@@ -8,6 +8,7 @@ export class NoteSetInfoModal extends Modal {
       }
     
       onOpen() {
+        this.service.updateNoteSetDisplayNameAndDescription(this.noteSet);
         this.service.updateNoteSetStats(this.noteSet);
         const { contentEl } = this;
         contentEl.createEl("h3", {text: `Note set "${this.noteSet.displayName}"`});
