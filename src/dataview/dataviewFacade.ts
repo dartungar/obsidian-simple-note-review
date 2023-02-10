@@ -38,11 +38,6 @@ export class DataviewFacade {
         return page[fieldName];
     }
 
-    // private throwIfDataviewNotInstalled() {
-    //     if (!this.isDataviewInstalled)
-    //         throw new DataviewNotInstalledError();
-    // }
-
     private async invokeAndReinitDvCacheOnError<TReturn>(func: (...args: any[]) 
         => TReturn, ...args: any[]): Promise<TReturn> {
             try {
