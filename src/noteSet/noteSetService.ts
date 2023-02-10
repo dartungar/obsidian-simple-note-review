@@ -8,6 +8,7 @@ import { ReviewFrequency } from "./reviewFrequency";
 import { DataArray } from "obsidian-dataview";
 import { calculateNoteReviewPriority } from "./noteReviewPriorityHelpers";
 import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
+import { getTodayAsYyyyMmDd } from "src/utils/dateUtils";
 
 
 export class NoteSetEmptyError extends Error {
@@ -104,7 +105,7 @@ export class NoteSetService {
     }
 
     private async setReviewedToToday(file: TFile): Promise<void> {
-        const todayString = new Date().toISOString().slice(0, 10); // "yyyy-mm-dd"
+        const todayString = getTodayAsYyyyMmDd(); // "yyyy-mm-dd"
 
         const fieldsToSet = [{
             name: this._plugin.settings.reviewedFieldName, 
