@@ -6,6 +6,7 @@ import { SelectNoteSetModal } from 'src/UI/selectNoteSetModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
 import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
 import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
+import { SimpleNoteReviewSidebarView } from 'src/UI/sidebar/sidebarView';
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
@@ -24,8 +25,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		this.service.updateNoteSetDisplayNames();
 
-		this.addRibbonIcon(this.openModalIconName, "Simple Note Review: Select Note Set", (evt: MouseEvent) => {
-			new SelectNoteSetModal(this.app, this).open();
+		this.registerView(
+			SimpleNoteReviewSidebarView.VIEW_TYPE,
+			(leaf) => new SimpleNoteReviewSidebarView(leaf, this)
+		);
+
+		this.addRibbonIcon(this.openModalIconName, "Simple Note Review: Open Sidebar View", (evt: MouseEvent) => {
+			this.activateView();
 		})
 
 		this.addRibbonIcon("play-circle", "Simple Note Review: Start Reviewing", (evt: MouseEvent) => {
@@ -79,6 +85,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		this.showNotice(`Reviewing note set "${this.settings.currentNoteSet.displayName}"`);
         this.service.openNextFile(currentNoteSet);
+
     }
 
 	async loadSettings() {
@@ -91,6 +98,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// refresh noteset view, if active
+		let view = this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0];
+		if (view) {
+			this.activateView();
+		}
 	}
 
 	public showNotice(message: string) : void {
@@ -105,13 +117,27 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		this.addCommand({
 			id: "start-review",
 			name: "Start reviewing notes",
-			callback: () => this.startReview(),
+			callback: () => {
+				this.startReview();
+				this.activateView();
+			},
 		});
 
 		this.addCommand({
 			id: "continue-review",
 			name: "Continue reviewing notes",
-			callback: () => this.startReview(),
+			callback: () => {
+				this.startReview();
+				this.activateView();
+			} 
+		});
+
+		this.addCommand({
+			id: "open-toolbar",
+			name: "Open Sidebar View",
+			callback: () => {
+				this.activateView();
+			},
 		});
 
 		this.addCommand({
@@ -134,7 +160,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewedFrequency(view.file, ReviewFrequency.high);
+				await this.service.setReviewFrequency(view.file, ReviewFrequency.high);
 			})
 		});
 
@@ -142,7 +168,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewedFrequency(view.file, ReviewFrequency.normal);
+				await this.service.setReviewFrequency(view.file, ReviewFrequency.normal);
 			})
 		});
 
@@ -150,7 +176,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewedFrequency(view.file, ReviewFrequency.low);
+				await this.service.setReviewFrequency(view.file, ReviewFrequency.low);
 			})
 		});
 
@@ -158,8 +184,21 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note)",
 			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewedFrequency(view.file, ReviewFrequency.ignore);
+				await this.service.setReviewFrequency(view.file, ReviewFrequency.ignore);
 			})
 		});
+	}
+
+	async activateView() {
+		this.app.workspace.detachLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE);
+	
+		await this.app.workspace.getRightLeaf(false).setViewState({
+		  type: SimpleNoteReviewSidebarView.VIEW_TYPE,
+		  active: true,
+		});
+	
+		this.app.workspace.revealLeaf(
+		  this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0]
+		);
 	}
 }
