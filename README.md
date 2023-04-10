@@ -4,18 +4,21 @@ Simple and flexible plugin for easy note review, resurfacing, and repetition.
 > IMPORTANT: this plugin uses amazing [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin as its search engine. 
 Please make sure you have Dataview plugin installed.
 
+### Review your notes easily
+Review notes based on the date they were last reviewed. 
+Notes with no reviewed date will be first in note set.
+Mark notes as rewieved today with one command.
+
+![simple-note-review-sidebar-demo](https://user-images.githubusercontent.com/36126057/230956476-a525e77d-632c-44f5-b8e3-ab0bd427155f.gif)
+
+
 ### Build flexible note sets for reviewing
 Build custom note sets for reviewing based on tags, folders, or DataviewJS-style queries.
 Customize note set's name and query logic.
 
 ![noteset_example_1](https://user-images.githubusercontent.com/36126057/208353981-756c526e-f42a-4981-be03-fa0b479a1dbc.jpg)
 
-### Easy reviewing
-Review notes based on the date they were last reviewed. 
-Notes with no reviewed date will be first in note set.
-Mark notes as rewieved today with one command.
 
-![noteset-select-modal](https://user-images.githubusercontent.com/36126057/187531666-55f6b7fc-7e14-4184-ac3e-f37843bd3a94.png)
 
 ### Review frequency
 You can optionally set each note's review frequency:
