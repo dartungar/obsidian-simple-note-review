@@ -78,6 +78,9 @@ export class NoteSetService {
 
 
 
+    public async startReview(noteSet: INoteSet): Promise<void> { 
+        this.openNextFile(noteSet);
+    }
 
     /** Open next file in noteSet.
      * @param  {INoteSet} noteSet
@@ -89,7 +92,7 @@ export class NoteSetService {
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
 
-    public async setReviewedFrequency(note: TAbstractFile, frequency: ReviewFrequency): Promise<void> {
+    public async setReviewFrequency(note: TAbstractFile, frequency: ReviewFrequency): Promise<void> {
         if (!(note instanceof TFile))
             return;
         try {
