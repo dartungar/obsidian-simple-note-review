@@ -135,6 +135,14 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "open-random-note",
+			name: "Open random note from the current note set",
+			callback: () => {
+				this.service.openRandomFile(this.settings.currentNoteSet);
+			} 
+		});
+
+		this.addCommand({
 			id: "open-modal",
 			name: "Select Note Set For Reviewing",
 			callback: () => {
