@@ -30,6 +30,8 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	async renderView(): Promise<any> {
 		this.contentEl.empty();
 
+        this.createGeneralActionsEl(this.contentEl);
+
 		this.createCurrentFileActionsEl(this.contentEl);
 
 		this.contentEl.createEl("h4", { text: "Note Sets" });
@@ -37,6 +39,22 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		this._plugin.settings.noteSets.forEach((noteSet) => {
 			this.createNotesetSection(noteSet);
 		});
+	}
+
+    private createGeneralActionsEl(parentEl: HTMLElement): HTMLElement {
+		var actionsEl = new Setting(parentEl);
+
+		actionsEl.setDesc("general actions:");
+
+		actionsEl.addExtraButton((cb) => {
+			cb.setIcon("refresh-cw")
+				.setTooltip("refresh sidebar")
+				.onClick(async () => {
+					await this.renderView();
+				});
+		});
+
+		return actionsEl.settingEl;
 	}
 
 	private createCurrentFileActionsEl(parentEl: HTMLElement): HTMLElement {
@@ -141,6 +159,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					this._plugin.showNotice(
 						`Set current note set to ${noteSet.displayName}.`
 					);
+                    this._plugin.service.startReview(this._plugin.settings.currentNoteSet);
 				});
 		});
 
