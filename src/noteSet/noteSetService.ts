@@ -92,6 +92,12 @@ export class NoteSetService {
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
     }
 
+    public async openRandomFile(noteSet: INoteSet): Promise<void> {
+        const filePath = await this.getNextFilePath(noteSet, ReviewAlgorithm.random);
+        const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
+        await this._app.workspace.getLeaf().openFile(abstractFile as TFile); 
+    }
+
     public async setReviewFrequency(note: TAbstractFile, frequency: ReviewFrequency): Promise<void> {
         if (!(note instanceof TFile))
             return;
@@ -146,7 +152,7 @@ export class NoteSetService {
         }
     }
 
-    private async getNextFilePath(noteSet: INoteSet): Promise<string> {
+    private async getNextFilePath(noteSet: INoteSet, reviewAlgorithm: ReviewAlgorithm = this._plugin.settings.reviewAlgorithm): Promise<string> {
         const reviewedFieldName = this._plugin.settings.reviewedFieldName;
         const freqFieldname = this._plugin.settings.reviewFrequencyFieldName;
         const pages = (await this._dataviewService.getNoteSetFiles(noteSet))
@@ -159,9 +165,11 @@ export class NoteSetService {
             sorted = pages.sort(x => x[reviewedFieldName], "asc");
         }
 
+        console.log("getting next file", noteSet, reviewAlgorithm, sorted);
+
         if (sorted.length > 0) {
             let firstNoteIndex: number;
-            switch (this._plugin.settings.reviewAlgorithm) {
+            switch (reviewAlgorithm) {
                 case ReviewAlgorithm.random:
                     firstNoteIndex = ~~(Math.random() * sorted.length);
                     break;

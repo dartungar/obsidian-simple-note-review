@@ -138,6 +138,16 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
+        this._plugin.service.updateNoteSetStats(noteSet);
+
+        if (!noteSet?.stats?.totalCount || noteSet.stats.totalCount === 0) { 
+            section.addExtraButton((cb) => {
+                cb.setIcon("alert-triangle")
+                    .setTooltip("this note set is empty. you may want to adjust settings.");
+            });
+        }
+
+
 		section.addExtraButton((cb) => {
 			cb.setIcon("info")
 				.setTooltip("view note set info & stats")
@@ -147,6 +157,20 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 						noteSet,
 						this._plugin.service
 					).open();
+				});
+		});
+
+        section.addExtraButton((cb) => {
+			cb.setIcon("dices")
+				.setTooltip("open random note from this note set")
+				.onClick(async () => {
+                    this._plugin.settings.currentNoteSet = noteSet;
+					await this._plugin.saveSettings();
+					this._plugin.showNotice(
+						`Set current note set to ${noteSet.displayName}.`
+					);
+                    this._plugin.service.openRandomFile(this._plugin.settings.currentNoteSet);
+                    this._plugin.activateView();
 				});
 		});
 
@@ -160,6 +184,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 						`Set current note set to ${noteSet.displayName}.`
 					);
                     this._plugin.service.startReview(this._plugin.settings.currentNoteSet);
+                    this._plugin.activateView();
 				});
 		});
 
