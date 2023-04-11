@@ -66,8 +66,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			})
 		);
 
-		
-
+	
 		this.addSettingTab(new SimpleNoteReviewPluginSettingsTab(this, this.app));
 	}
 
@@ -98,11 +97,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-		// refresh noteset view, if active
-		let view = this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0];
-		if (view) {
-			this.activateView();
-		}
 	}
 
 	public showNotice(message: string) : void {
@@ -201,4 +195,5 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		  this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0]
 		);
 	}
+
 }
