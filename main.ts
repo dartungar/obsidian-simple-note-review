@@ -113,7 +113,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "Start reviewing notes",
 			callback: () => {
 				this.startReview();
-				this.activateView();
 			},
 		});
 
@@ -122,7 +121,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "Continue reviewing notes",
 			callback: () => {
 				this.startReview();
-				this.activateView();
 			} 
 		});
 
