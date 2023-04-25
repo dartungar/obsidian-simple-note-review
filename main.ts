@@ -151,41 +151,56 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		this.addCommand({
 			id: "set-reviewed-date",
 			name: "Mark Note As Reviewed Today",
-			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.reviewNote(view.file);
-			})
+			callback: () => {
+				this.service.reviewNote(
+					this.app.workspace.getActiveFile(),
+					this.settings.currentNoteSet
+				)
+			},
 		});
 
 		this.addCommand({
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
-			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewFrequency(view.file, ReviewFrequency.high);
-			})
+			callback: () => {
+				this.service.setReviewFrequency(
+					this.app.workspace.getActiveFile(),
+					ReviewFrequency.high
+				);
+			},
 		});
 
 		this.addCommand({
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
-			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewFrequency(view.file, ReviewFrequency.normal);
-			})
+			callback: () => {
+				this.service.setReviewFrequency(
+					this.app.workspace.getActiveFile(),
+					ReviewFrequency.normal
+				);
+			},
 		});
 
 		this.addCommand({
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
-			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewFrequency(view.file, ReviewFrequency.low);
-			})
+			callback: () => {
+				this.service.setReviewFrequency(
+					this.app.workspace.getActiveFile(),
+					ReviewFrequency.low
+				);
+			},
 		});
 
 		this.addCommand({
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note)",
-			editorCallback: (async (editor: Editor, view: MarkdownView) => {
-				await this.service.setReviewFrequency(view.file, ReviewFrequency.ignore);
-			})
+			callback: () => {
+				this.service.setReviewFrequency(
+					this.app.workspace.getActiveFile(),
+					ReviewFrequency.ignore
+				);
+			},
 		});
 	}
 

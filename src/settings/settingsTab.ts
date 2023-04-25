@@ -67,7 +67,9 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
         this._plugin.settings 
 		&& this._plugin.settings.noteSets
 		&& this._plugin.settings.noteSets.forEach(noteSet => {
+
 			this._plugin.service.updateNoteSetDisplayNameAndDescription(noteSet);
+			this._plugin.service.updateNoteSetStats(noteSet);
 
 			// Header
             const header = new Setting(containerEl);
