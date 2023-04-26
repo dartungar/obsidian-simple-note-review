@@ -54,6 +54,15 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				});
 		});
 
+		actionsEl.addExtraButton((cb) => {
+			cb.setIcon("settings")
+				.setTooltip("open settings")
+				.onClick( () => {
+					(this.app as any).setting.open();
+					(this.app as any).setting.openTabById("simple-note-review");
+				});
+		});
+
 		return actionsEl.settingEl;
 	}
 
