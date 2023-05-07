@@ -1,63 +1,13 @@
 /* settings */
-.section-setting {
+/* .section-setting {
 	display: block;
-}
+} */
 
-.section-setting > .setting-item-control {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: flex-start;
-}
-
-.section-setting > .setting-item-control > span {
-	margin-right: 5px;
-}
-
-.section-setting > .setting-item-control > input, .section-setting > .setting-item-control > textarea {
-	margin-right: 30px;
-}
-
-.section-setting textarea {
-	max-height: 200px;
-}
-
-.noteSet-heading {
-	padding-bottom: 10px;
-    border-top: solid 2px rgba(138, 138, 138, 0.25);
-    margin-bottom: 10px;	
-}
-
-.noteSet-heading > .setting-item-info > .setting-item-name {
-	font-size: 120% !important;
-}
-
-.setting-body {
-	padding-bottom: 7px;
-	margin-bottom: 10px;
-}
-
-.setting-body.is-collapsed, 
-.setting-body-advanced.is-collapsed {
-	display: none;
-}
-
-.simple-note-review-collapse-icon {
-	display: inline;
-	transform: none;
-	margin-right: 8px;
-}
-
-.simple-note-review-collapse-icon > svg {
-	position: relative;
-	top: 2px;
-}
-
-.note-set-delete-modal {
+/* .note-set-delete-modal {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
+} */
 
 /* SIDEBAR */
 .sidebar-noteset-section {

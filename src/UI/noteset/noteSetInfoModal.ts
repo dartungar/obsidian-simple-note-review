@@ -1,6 +1,6 @@
 import { App, Modal } from "obsidian";
-import { INoteSet } from "../noteSet/INoteSet";
-import { NoteSetService } from "../noteSet/noteSetService";
+import { INoteSet } from "../../noteSet/INoteSet";
+import { NoteSetService } from "../../noteSet/noteSetService";
 
 export class NoteSetInfoModal extends Modal {
     constructor(app: App, private noteSet: INoteSet, private service: NoteSetService) {
