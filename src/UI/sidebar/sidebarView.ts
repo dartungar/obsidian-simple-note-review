@@ -7,8 +7,9 @@ import {
 	setIcon,
 } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
-import { NoteSetInfoModal } from "../noteSetInfoModal";
+import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
+import { NoteSetEditModal } from "../noteset/noteSetEditModal";
 
 export class SimpleNoteReviewSidebarView extends ItemView {
 	static readonly VIEW_TYPE = "simple-note-review-sidebar-view";
@@ -166,6 +167,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 						noteSet,
 						this._plugin.service
 					).open();
+				});
+		});
+
+		section.addExtraButton((cb) => {
+			cb.setIcon("edit")
+				.setTooltip("edit note set")
+				.onClick(() => {
+					new NoteSetEditModal(noteSet, this._plugin).open();
 				});
 		});
 

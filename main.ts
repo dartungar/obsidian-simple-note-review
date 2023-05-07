@@ -4,7 +4,7 @@ import { addSimpleNoteReviewIcon } from 'src/UI/icon';
 import { NoteSetService } from 'src/noteSet/noteSetService';
 import { SelectNoteSetModal } from 'src/UI/selectNoteSetModal';
 import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
-import { SimpleNoteReviewPluginSettingsTab } from 'src/settings/settingsTab';
+import { SimpleNoteReviewPluginSettingsTab } from 'src/UI/settingsTab';
 import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
 import { SimpleNoteReviewSidebarView } from 'src/UI/sidebar/sidebarView';
 
@@ -216,5 +216,6 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		  this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0]
 		);
 	}
+
 
 }

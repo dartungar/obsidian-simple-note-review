@@ -165,8 +165,6 @@ export class NoteSetService {
             sorted = pages.sort(x => x[reviewedFieldName], "asc");
         }
 
-        console.log("getting next file", noteSet, reviewAlgorithm, sorted);
-
         if (sorted.length > 0) {
             let firstNoteIndex: number;
             switch (reviewAlgorithm) {
