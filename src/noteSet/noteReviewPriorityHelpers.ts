@@ -37,8 +37,8 @@ export function calculateNoteReviewPriority(plugin: SimpleNoteReviewPlugin, note
 
     let multiplier = 1;
 
-    if (note[reviewedFieldName] == null) 
-        multiplier = 100;
+    if (note[reviewedFieldName] == null || note[reviewedFieldName] == "" || note[reviewedFieldName] == undefined) 
+        multiplier = plugin.settings.unreviewedNotesFirst ? 10000 : 300;
     else 
         multiplier = getNumberOfDaysFromToday(note[reviewedFieldName]);
 

@@ -10,6 +10,7 @@ export interface SimpleNoteReviewPluginSettings {
     openRandomNote: boolean
     reviewAlgorithm: ReviewAlgorithm
     useReviewFrequency: boolean
+    unreviewedNotesFirst: boolean
 }
 
 export class DefaultSettings implements SimpleNoteReviewPluginSettings {
@@ -21,4 +22,5 @@ export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     openRandomNote = false;
     reviewAlgorithm: ReviewAlgorithm.default;
     useReviewFrequency = false;
+    unreviewedNotesFirst = false;
 }
