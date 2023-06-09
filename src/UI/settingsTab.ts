@@ -53,6 +53,20 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					});
 			});
 
+			new Setting(containerEl)
+			.setName("Start with unreviewed notes")
+			.setDesc(
+				"Start review with notes that have no review date. If turned off, notes without the review date will have lower priority than notes with early review dates."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this._plugin.settings.unreviewedNotesFirst)
+					.onChange((value) => {
+						this._plugin.settings.unreviewedNotesFirst = value;
+						this._plugin.saveSettings();
+					});
+			});
+
 		// NoteSet settings
 
 		containerEl.createEl("h3", { text: "Note Sets" });
