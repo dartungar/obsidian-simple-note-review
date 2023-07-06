@@ -1,10 +1,11 @@
 {
 	"id": "simple-note-review",
 	"name": "Simple Note Review",
-	"version": "0.9.1",
+	"version": "0.9.2",
 	"minAppVersion": "1.1.0",
 	"description": "Simple, customizable plugin for easy note review, resurfacing  & repetition.",
 	"author": "dartungar",
 	"authorUrl": "https://dartungar.com",
+	"fundingUrl": "https://www.paypal.com/paypalme/dartungar",
 	"isDesktopOnly": false
 }
