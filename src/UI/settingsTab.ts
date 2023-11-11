@@ -74,10 +74,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		this._plugin.settings &&
 			this._plugin.settings.noteSets &&
 			this._plugin.settings.noteSets.forEach((noteSet) => {
-				this._plugin.service.updateNoteSetDisplayNameAndDescription(
+				this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(
 					noteSet
 				);
-				this._plugin.service.updateNoteSetStats(noteSet);
+				this._plugin.noteSetService.updateNoteSetStats(noteSet);
 
 				// Header
 				const setting = new Setting(containerEl);
@@ -97,7 +97,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 							new NoteSetInfoModal(
 								this.app,
 								noteSet,
-								this._plugin.service
+								this._plugin.noteSetService
 							).open();
 						});
 				});
@@ -122,7 +122,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 								this.app,
 								this,
 								noteSet,
-								this._plugin.service
+								this._plugin.noteSetService
 							).open();
 						});
 				});
@@ -131,7 +131,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		new Setting(containerEl).addButton((btn) => {
 			btn.setButtonText("Add Note Set");
 			btn.onClick(async () => {
-				await this._plugin.service.addEmptyNoteSet();
+				await this._plugin.noteSetService.addEmptyNoteSet();
 				this.refresh();
 			});
 		});

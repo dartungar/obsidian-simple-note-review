@@ -7,10 +7,15 @@ import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pl
 import { SimpleNoteReviewPluginSettingsTab } from 'src/UI/settingsTab';
 import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
 import { SimpleNoteReviewSidebarView } from 'src/UI/sidebar/sidebarView';
+import { FileService } from 'src/notes/fileService';
+import { ReviewService } from 'src/reviews/reviewService';
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
-	service: NoteSetService = new NoteSetService(this.app, this);
+	noteSetService: NoteSetService = new NoteSetService(this.app, this);
+	reviewService: ReviewService = new ReviewService(this.app, this);
+	fileService: FileService = new FileService(this.app, this);
+
 	readonly openModalIconName: string = "glasses";
 	readonly markAsReviewedIconName: string = "checkmark";
 
@@ -23,7 +28,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.service.updateNoteSetDisplayNames();
+		this.noteSetService.updateNoteSetDisplayNames();
 
 		this.registerView(
 			SimpleNoteReviewSidebarView.VIEW_TYPE,
@@ -47,7 +52,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 					.setTitle("Mark Note As Reviewed Today")
 					.setIcon(this.markAsReviewedIconName)
 					.onClick(async () => {
-						await this.service.reviewNote(view.file);
+						await this.noteSetService.reviewNote(view.file);
 					});
 				});
 			})
@@ -60,7 +65,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 					.setTitle("Mark Note As Reviewed Today")
 					.setIcon(this.markAsReviewedIconName)
 					.onClick(async () => {
-						await this.service.reviewNote(file);
+						await this.noteSetService.reviewNote(file);
 					});
 				});
 			})
@@ -83,7 +88,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
         }
 
 		this.showNotice(`Reviewing note set "${this.settings.currentNoteSet.displayName}"`);
-        this.service.openNextFile(currentNoteSet);
+        this.noteSetService.openNextFile(currentNoteSet);
 
     }
 
@@ -136,7 +141,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-random-note",
 			name: "Open random note from the current note set",
 			callback: () => {
-				this.service.openRandomFile(this.settings.currentNoteSet);
+				this.noteSetService.openRandomFile(this.settings.currentNoteSet);
 			} 
 		});
 
@@ -152,7 +157,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-reviewed-date",
 			name: "Mark Note As Reviewed Today",
 			callback: () => {
-				this.service.reviewNote(
+				this.noteSetService.reviewNote(
 					this.app.workspace.getActiveFile(),
 					this.settings.currentNoteSet
 				)
@@ -163,7 +168,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.noteSetService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.high
 				);
@@ -174,7 +179,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.noteSetService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.normal
 				);
@@ -185,7 +190,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.noteSetService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.low
 				);
@@ -196,7 +201,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note)",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.noteSetService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.ignore
 				);

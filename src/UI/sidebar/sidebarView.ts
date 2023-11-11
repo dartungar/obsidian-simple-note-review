@@ -76,7 +76,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("slash")
 				.setTooltip("exclude file from review")
 				.onClick(() => {
-					this._plugin.service.setReviewFrequency(
+					this._plugin.noteSetService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.ignore
 					);
@@ -87,7 +87,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-low")
 				.setTooltip("set review frequency to low")
 				.onClick(() => {
-					this._plugin.service.setReviewFrequency(
+					this._plugin.noteSetService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.low
 					);
@@ -98,7 +98,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-medium")
 				.setTooltip("set review frequency to normal")
 				.onClick(() => {
-					this._plugin.service.setReviewFrequency(
+					this._plugin.noteSetService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.normal
 					);
@@ -109,7 +109,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal")
 				.setTooltip("set review frequency to high")
 				.onClick(() => {
-					this._plugin.service.setReviewFrequency(
+					this._plugin.noteSetService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.high
 					);
@@ -120,7 +120,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("file-check")
 				.setTooltip("mark note as reviewed & go to the next file")
 				.onClick(() => {
-					this._plugin.service.reviewNote(
+					this._plugin.noteSetService.reviewNote(
 						this.app.workspace.getActiveFile(),
 						this._plugin.settings.currentNoteSet
 					);
@@ -148,7 +148,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-        this._plugin.service.updateNoteSetStats(noteSet);
+        this._plugin.noteSetService.updateNoteSetStats(noteSet);
 
         if (!noteSet?.stats?.totalCount || noteSet.stats.totalCount === 0) { 
             section.addExtraButton((cb) => {
@@ -165,7 +165,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					new NoteSetInfoModal(
 						this.app,
 						noteSet,
-						this._plugin.service
+						this._plugin.noteSetService
 					).open();
 				});
 		});
@@ -187,7 +187,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					this._plugin.showNotice(
 						`Set current note set to ${noteSet.displayName}.`
 					);
-                    this._plugin.service.openRandomFile(this._plugin.settings.currentNoteSet);
+                    this._plugin.noteSetService.openRandomFile(this._plugin.settings.currentNoteSet);
                     this._plugin.activateView();
 				});
 		});
@@ -201,7 +201,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					this._plugin.showNotice(
 						`Set current note set to ${noteSet.displayName}.`
 					);
-                    this._plugin.service.startReview(this._plugin.settings.currentNoteSet);
+                    this._plugin.noteSetService.startReview(this._plugin.settings.currentNoteSet);
                     this._plugin.activateView();
 				});
 		});
