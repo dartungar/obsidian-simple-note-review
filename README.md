@@ -1,45 +1,54 @@
 # Simple Note Review
-Simple and flexible plugin for easy note review, resurfacing, and repetition.
+Simple and flexible plugin for note review, resurfacing, and repetition.
 
-> IMPORTANT: this plugin uses amazing [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin as its search engine. 
+> IMPORTANT: this plugin uses [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin as its search engine. 
 Please make sure you have Dataview plugin installed.
 
-### Review your notes easily
-Review notes based on the date they were last reviewed. 
-Notes with no reviewed date will be first in note set.
-Mark notes as rewieved today with one command.
+### Is this a spaced repitition plugin?
+Not quite.
 
-![simple-note-review-sidebar-demo](https://user-images.githubusercontent.com/36126057/230956476-a525e77d-632c-44f5-b8e3-ab0bd427155f.gif)
+This is a plugin for people who want to review, resurface, and rediscover their notes, but do not want to build a rigid system with a schedule.
+
+The philosophy is: "define a set of notes and review them at your own pace". 
+
+## How does it work?
+#### Define a note set based on tags, folders, or a dataviewJS query.
+Simple Note Review can create a noteset with a flexible set of rules: tags and/or folders, creation date, or even a dataviewJS query.
+A note can be in any number of note sets.
+
+![image](https://github.com/dartungar/obsidian-simple-note-review/assets/36126057/60c9501c-aa4c-4d09-bd77-4ebf2dd9bb0b)
+
+#### Use toolbar or commands for reviewing
+When you start a review of a noteset for the first time, the plugin creates a persistent queue with all the notes in this noteset.
+
+You can proceed reviewing notes in order, or choose a random one.
+
+If you want to start a fresh review, reset the noteset queue with corresponding button on the sidebar or a command.
+
+IMPORTANT: review queue does not update automatically, so it's always best to reset the queue when starting a new review!
+
+![sidebar](https://github.com/dartungar/obsidian-simple-note-review/assets/36126057/f85c88f9-819f-40ec-a5ee-2db623d32733)
+
+#### Review or skip note
+To review or skip a note, click button on a sidebar or use a corresponding command.
+Skipping a note removes it from a current review queue; it will be back when you reset the queue.
+
+![review-note](https://github.com/dartungar/obsidian-simple-note-review/assets/36126057/9d18dc36-2c98-43bb-8101-12d8cf7cc313)
 
 
-### Build flexible note sets for reviewing
-Build custom note sets for reviewing based on tags, folders, or DataviewJS-style queries.
-Customize note set's name and query logic.
-
-![noteset_example_1](https://user-images.githubusercontent.com/36126057/208353981-756c526e-f42a-4981-be03-fa0b479a1dbc.jpg)
-
-
-
-### Review frequency
-You can optionally set each note's review frequency:
+#### Change review frequency for notes or exclude them from reviews
+You can optionally set each note's review frequency in the sidebar on via command:
 - high
 - normal
 - low
-- ignore
+- ignore (exclude from all reviews)
 
-### Review algorithms
-![note-review-frequency](https://user-images.githubusercontent.com/36126057/192049630-bb1455eb-e2b1-4abd-9440-beb8dfac7818.png)
-##### Default
-Makes notes with earlier review dates appear first.
-If review frequency is set, notes with higher review frequency will rank significantly higher than those with lower review frequency.
-##### Random
-Takes a random note from the current set.
+#### What does "current note set" mean?
+It is a note set you are currently reviewing. 
+Since one note can be in any number of note sets, the plugin needs to understand which queue to use.
 
-### Review statistics
-See note set's details: 
-- what notes are included in the set
-- how many notes are included in the set
-- how many notes are reviewed in last 7, 30 days
-- how many notes are not reviewed yet
+#### Noteset Stats
+You can see noteset stats in settings or in sidebar.
 
-![noteset-info](https://user-images.githubusercontent.com/36126057/187531702-4de555fe-6229-4885-92a1-a591bbc33615.png)
+![image](https://github.com/dartungar/obsidian-simple-note-review/assets/36126057/257d2a64-60fc-470d-8649-9541b47159cf)
+

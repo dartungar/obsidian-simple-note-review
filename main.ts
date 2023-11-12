@@ -1,91 +1,69 @@
-import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
-import { getAPI } from 'obsidian-dataview';
-import { addSimpleNoteReviewIcon } from 'src/UI/icon';
-import { NoteSetService } from 'src/noteSet/noteSetService';
-import { SelectNoteSetModal } from 'src/UI/selectNoteSetModal';
-import { DefaultSettings, SimpleNoteReviewPluginSettings } from 'src/settings/pluginSettings';
-import { SimpleNoteReviewPluginSettingsTab } from 'src/UI/settingsTab';
-import { ReviewFrequency } from 'src/noteSet/reviewFrequency';
-import { SimpleNoteReviewSidebarView } from 'src/UI/sidebar/sidebarView';
+import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
+import { getAPI } from "obsidian-dataview";
+import { addSimpleNoteReviewIcon } from "src/UI/icon";
+import { NoteSetService } from "src/noteSet/noteSetService";
+import { SelectNoteSetModal } from "src/UI/selectNoteSetModal";
+import {
+	DefaultSettings,
+	SimpleNoteReviewPluginSettings,
+} from "src/settings/pluginSettings";
+import { SimpleNoteReviewPluginSettingsTab } from "src/UI/settingsTab";
+import { ReviewFrequency } from "src/noteSet/reviewFrequency";
+import { SimpleNoteReviewSidebarView } from "src/UI/sidebar/sidebarView";
+import { FileService } from "src/notes/fileService";
+import { ReviewService } from "src/queues/reviewService";
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
-	service: NoteSetService = new NoteSetService(this.app, this);
+	noteSetService: NoteSetService = new NoteSetService(this.app, this);
+	reviewService: ReviewService = new ReviewService(this.app, this);
+	fileService: FileService = new FileService(this.app, this);
+
 	readonly openModalIconName: string = "glasses";
 	readonly markAsReviewedIconName: string = "checkmark";
 
 	async onload() {
 		this.app.workspace.onLayoutReady(() => {
 			if (!this.dataviewIsInstalled()) {
-				this.showNotice("Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first.")
+				this.showNotice(
+					"Could not find Dataview plugin. To use Simple Note Review plugin, please install Dataview plugin first."
+				);
 			}
 		});
 
 		await this.loadSettings();
 
-		this.service.updateNoteSetDisplayNames();
+		this.noteSetService.updateNoteSetDisplayNames();
 
 		this.registerView(
 			SimpleNoteReviewSidebarView.VIEW_TYPE,
 			(leaf) => new SimpleNoteReviewSidebarView(leaf, this)
 		);
 
-		this.addRibbonIcon(this.openModalIconName, "Simple Note Review: Open Sidebar View", (evt: MouseEvent) => {
-			this.activateView();
-		})
+		this.addRibbonIcon(
+			this.openModalIconName,
+			"Simple Note Review: Open Sidebar View",
+			(evt: MouseEvent) => {
+				this.activateView();
+			}
+		);
 
-		this.addRibbonIcon("play-circle", "Simple Note Review: Start Reviewing", (evt: MouseEvent) => {
-			this.startReview();
-		});
+		this.addRibbonIcon(
+			"play",
+			"Simple Note Review: Continue Review of Current Note Set",
+			(evt: MouseEvent) => {
+				this.reviewService.startReview(this.settings.currentNoteSet);
+			}
+		);
 
 		this.addCommands();
 
-		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu, editor, view) => {
-				menu.addItem((item) => {
-					item
-					.setTitle("Mark Note As Reviewed Today")
-					.setIcon(this.markAsReviewedIconName)
-					.onClick(async () => {
-						await this.service.reviewNote(view.file);
-					});
-				});
-			})
+		this.addSettingTab(
+			new SimpleNoteReviewPluginSettingsTab(this, this.app)
 		);
-
-		this.registerEvent(
-			this.app.workspace.on("file-menu", (menu, file) => {
-				menu.addItem((item) => {
-					item
-					.setTitle("Mark Note As Reviewed Today")
-					.setIcon(this.markAsReviewedIconName)
-					.onClick(async () => {
-						await this.service.reviewNote(file);
-					});
-				});
-			})
-		);
-
-	
-		this.addSettingTab(new SimpleNoteReviewPluginSettingsTab(this, this.app));
 	}
 
-	onunload() {
-
-	}
-
-
-	public async startReview(): Promise<void> {
-        let currentNoteSet = this.settings.currentNoteSet;
-        if (!currentNoteSet) {
-			new SelectNoteSetModal(this.app, this).open();
-			return;
-        }
-
-		this.showNotice(`Reviewing note set "${this.settings.currentNoteSet.displayName}"`);
-        this.service.openNextFile(currentNoteSet);
-
-    }
+	onunload() {}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -99,33 +77,25 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	public showNotice(message: string) : void {
+	public showNotice(message: string): void {
 		new Notice(message);
 	}
 
 	private dataviewIsInstalled(): boolean {
 		return !!getAPI();
-	} 
+	}
 
 	private addCommands(): void {
 		this.addCommand({
 			id: "start-review",
-			name: "Start reviewing notes",
+			name: "Start reviewing notes in current note set",
 			callback: () => {
-				this.startReview();
+				this.reviewService.startReview(this.settings.currentNoteSet);
 			},
 		});
 
 		this.addCommand({
-			id: "continue-review",
-			name: "Continue reviewing notes",
-			callback: () => {
-				this.startReview();
-			} 
-		});
-
-		this.addCommand({
-			id: "open-toolbar",
+			id: "open-sidebar",
 			name: "Open Sidebar View",
 			callback: () => {
 				this.activateView();
@@ -136,26 +106,38 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-random-note",
 			name: "Open random note from the current note set",
 			callback: () => {
-				this.service.openRandomFile(this.settings.currentNoteSet);
-			} 
+				this.reviewService.openRandomNoteInQueue(
+					this.settings.currentNoteSet
+				);
+			},
+		});
+
+		this.addCommand({
+			id: "reset-queue",
+			name: "reset queue for the current note set",
+			callback: () => {
+				this.reviewService.resetNotesetQueue(
+					this.settings.currentNoteSet
+				);
+			},
 		});
 
 		this.addCommand({
 			id: "open-modal",
-			name: "Select Note Set For Reviewing",
+			name: "Select note set for reviewing",
 			callback: () => {
 				new SelectNoteSetModal(this.app, this).open();
 			},
 		});
 
 		this.addCommand({
-			id: "set-reviewed-date",
-			name: "Mark Note As Reviewed Today",
+			id: "mark-current-note-as-reviewed",
+			name: "Mark current note as reviewed",
 			callback: () => {
-				this.service.reviewNote(
+				this.reviewService.reviewNote(
 					this.app.workspace.getActiveFile(),
 					this.settings.currentNoteSet
-				)
+				);
 			},
 		});
 
@@ -163,7 +145,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.high
 				);
@@ -174,7 +156,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.normal
 				);
@@ -185,7 +167,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.low
 				);
@@ -194,28 +176,41 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 
 		this.addCommand({
 			id: "set-review-frequency-ignore",
-			name: "Set review frequency to none (ignore this note)",
+			name: "Set review frequency to none (ignore this note in all reviews)",
 			callback: () => {
-				this.service.setReviewFrequency(
+				this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.ignore
+				);
+			},
+		});
+
+		this.addCommand({
+			id: "skip-note",
+			name: "Skip note from current review",
+			callback: () => {
+				this.reviewService.skipNote(
+					this.app.workspace.getActiveFile(),
+					this.settings.currentNoteSet
 				);
 			},
 		});
 	}
 
 	async activateView() {
-		this.app.workspace.detachLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE);
-	
+		this.app.workspace.detachLeavesOfType(
+			SimpleNoteReviewSidebarView.VIEW_TYPE
+		);
+
 		await this.app.workspace.getRightLeaf(false).setViewState({
-		  type: SimpleNoteReviewSidebarView.VIEW_TYPE,
-		  active: true,
+			type: SimpleNoteReviewSidebarView.VIEW_TYPE,
+			active: true,
 		});
-	
+
 		this.app.workspace.revealLeaf(
-		  this.app.workspace.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)[0]
+			this.app.workspace.getLeavesOfType(
+				SimpleNoteReviewSidebarView.VIEW_TYPE
+			)[0]
 		);
 	}
-
-
 }
