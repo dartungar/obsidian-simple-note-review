@@ -1,5 +1,6 @@
 // TODO: frontmatter keys
 
+import { INoteQueue } from "src/queues/noteQueue"
 import { JoinLogicOperators } from "../settings/joinLogicOperators"
 import { INoteSetStats } from "./INoteSetStats"
 
@@ -17,6 +18,7 @@ export interface INoteSet {
     modifiedInLastNDays: number | undefined
     dataviewQuery: string
     stats: INoteSetStats
+    queue: INoteQueue
 }
 
 export class EmptyNoteSet implements INoteSet {
@@ -32,6 +34,7 @@ export class EmptyNoteSet implements INoteSet {
     modifiedInLastNDays: undefined
     dataviewQuery: ""
     stats: INoteSetStats
+    queue: INoteQueue
 
     constructor(id: number) {    
         this.id = id;    

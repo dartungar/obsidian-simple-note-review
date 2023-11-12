@@ -41,7 +41,6 @@ export class NoteSetService {
         await this._plugin.saveSettings();
     }
 
-
     public updateNoteSetDisplayNames() {
         this._plugin.settings.noteSets.forEach(q => this.updateNoteSetDisplayNameAndDescription(q));
     } 
