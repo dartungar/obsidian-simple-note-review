@@ -46,7 +46,6 @@ export class ReviewService {
 		try {
             this._plugin.fileService.setReviewedToToday(note);
             this.removeNoteFromQueue(note, noteSet);
-			this.openNextNoteInQueue(noteSet);
 		} catch (error) {
 			this._plugin.showNotice(error.message);
 		}
