@@ -1,5 +1,3 @@
-// TODO: frontmatter keys
-
 import { INoteQueue } from "src/queues/noteQueue"
 import { JoinLogicOperators } from "../settings/joinLogicOperators"
 import { INoteSetStats } from "./INoteSetStats"

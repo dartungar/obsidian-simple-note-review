@@ -19,7 +19,7 @@ export class ReviewService {
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
 	public async startReview(noteSet: INoteSet): Promise<void> {
-		if (!noteSet.queue?.filenames?.length || noteSet.queue.filenames.length === 0) {
+		if (!noteSet.queue || !noteSet.queue?.filenames?.length || noteSet.queue.filenames.length === 0) {
 			this._plugin.showNotice("starting a fresh review...")
 			await this.createNotesetQueue(noteSet);
 		}
@@ -55,7 +55,6 @@ export class ReviewService {
 		}
 	}
 	
-	// TODO
 	public async openRandomNoteInQueue(noteSet: INoteSet) {
 		let randomIndex = Math.floor(Math.random() * noteSet.queue.filenames.length);
     	let filePath = noteSet.queue.filenames[randomIndex];
@@ -63,34 +62,29 @@ export class ReviewService {
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile);
 	}
 
-	// TODO
     public async skipNote(note: TAbstractFile, noteSet: INoteSet): Promise<void> {
 		// TODO: check if current note is in queue
 		this.removeNoteFromQueue(note, noteSet);
 		await this.openNextNoteInQueue(noteSet);
     }
 
-    // TODO
     private async removeNoteFromQueue(note: TAbstractFile, noteSet: INoteSet): Promise<void> {
 		noteSet.queue.filenames.remove(note.path);
 		await this._plugin.saveSettings();
     }
 
-    // TODO
     private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
 		let filePath = noteSet.queue.filenames[0];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getLeaf().openFile(abstractFile as TFile);
     }
 
-    // TODO
     private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
 		let files = await this.generateNotesetQueue(noteSet);
 		noteSet.queue = new NoteQueue(files);
 		await this._plugin.saveSettings();
     }
 
-    // TODO: remove; use logic for populating new review
 	private async generateNotesetQueue(
 		noteSet: INoteSet
 	): Promise<string[]> {
