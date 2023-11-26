@@ -7,7 +7,6 @@ export class NoteSetInfoService {
 
     constructor(private _dataviewService: DataviewService) {  }
 
-    // TODO: p.reviewed -> p.[setting for field name] !!
     public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
         const pages = await this._dataviewService.getNoteSetFiles(noteSet);
         noteSet.stats = {
