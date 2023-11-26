@@ -19,11 +19,7 @@ export class ReviewService {
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
 	public async startReview(noteSet: INoteSet): Promise<void> {
-		if (!noteSet.queue || !noteSet.queue?.filenames?.length || noteSet.queue.filenames.length === 0) {
-			this._plugin.showNotice("starting a fresh review...")
-			await this.createNotesetQueue(noteSet);
-		}
-        	
+		await this.createNotesetQueueIfNotExists(noteSet);
         await this.openNextNoteInQueue(noteSet);
 	}
 
@@ -56,6 +52,8 @@ export class ReviewService {
 	}
 	
 	public async openRandomNoteInQueue(noteSet: INoteSet) {
+		await this.createNotesetQueueIfNotExists(noteSet);
+
 		let randomIndex = Math.floor(Math.random() * noteSet.queue.filenames.length);
     	let filePath = noteSet.queue.filenames[randomIndex];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
@@ -84,6 +82,12 @@ export class ReviewService {
 		noteSet.queue = new NoteQueue(files);
 		await this._plugin.saveSettings();
     }
+
+	private async createNotesetQueueIfNotExists(noteSet: INoteSet): Promise<void> {
+		if (!noteSet.queue || !noteSet.queue?.filenames?.length || noteSet.queue.filenames.length === 0) {
+			await this.createNotesetQueue(noteSet);
+		}
+	}
 
 	private async generateNotesetQueue(
 		noteSet: INoteSet
