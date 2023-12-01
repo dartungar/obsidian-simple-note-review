@@ -57,7 +57,7 @@ export class ReviewService {
 		let randomIndex = Math.floor(Math.random() * noteSet.queue.filenames.length);
     	let filePath = noteSet.queue.filenames[randomIndex];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
-        await this._app.workspace.getLeaf().openFile(abstractFile as TFile);
+        await this._app.workspace.getMostRecentLeaf().openFile(abstractFile as TFile);
 	}
 
     public async skipNote(note: TAbstractFile, noteSet: INoteSet): Promise<void> {
