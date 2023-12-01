@@ -74,7 +74,7 @@ export class ReviewService {
     private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
 		let filePath = noteSet.queue.filenames[0];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
-        await this._app.workspace.getLeaf().openFile(abstractFile as TFile);
+        await this._app.workspace.getMostRecentLeaf().openFile(abstractFile as TFile);
     }
 
     private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
