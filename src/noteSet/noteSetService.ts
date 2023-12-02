@@ -3,12 +3,6 @@ import { App, TAbstractFile, TFile} from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService } from "./noteSetInfoService";
-import { MetadataService } from "src/utils/metadataService";
-import { ReviewFrequency } from "./reviewFrequency";
-import { DataArray } from "obsidian-dataview";
-import { calculateNoteReviewPriority } from "./noteReviewPriorityHelpers";
-import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
-import { getTodayAsYyyyMmDd } from "src/utils/dateUtils";
 
 
 export class NoteSetEmptyError extends Error {
