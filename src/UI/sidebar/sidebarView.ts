@@ -161,8 +161,6 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-		this._plugin.noteSetService.updateNoteSetStats(noteSet);
-
 		if (!noteSet?.stats?.totalCount || noteSet.stats.totalCount === 0) {
 			section.addExtraButton((cb) => {
 				cb.setIcon("alert-triangle").setTooltip(

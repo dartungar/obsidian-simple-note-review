@@ -7,9 +7,9 @@ export class NoteSetInfoModal extends Modal {
         super(app);
       }
     
-      onOpen() {
+      async onOpen() {
         this.service.updateNoteSetDisplayNameAndDescription(this.noteSet);
-        this.service.updateNoteSetStats(this.noteSet);
+        await this.service.updateNoteSetStats(this.noteSet);
         const { contentEl } = this;
         contentEl.createEl("h3", {text: `Note set "${this.noteSet.displayName}"`});
         contentEl.createDiv({text: `This query ${this.noteSet.description}.`});
