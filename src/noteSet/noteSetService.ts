@@ -44,7 +44,6 @@ export class NoteSetService {
     }
 
     public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
-        console.log("updating note set stats for", noteSet.displayName);
         await this._noteSetInfoService.updateNoteSetStats(noteSet);
     }
 
