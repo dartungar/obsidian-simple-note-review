@@ -44,7 +44,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createGeneralActionsEl(parentEl: HTMLElement): HTMLElement {
-		var actionsEl = new Setting(parentEl);
+		let actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("general actions:");
 
@@ -69,7 +69,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createCurrentFileActionsEl(parentEl: HTMLElement): HTMLElement {
-		var actionsEl = new Setting(parentEl);
+		let actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("current file actions:");
 
