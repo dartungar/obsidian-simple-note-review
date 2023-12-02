@@ -113,8 +113,4 @@ export class ReviewService {
 		}
 		throw new NoteSetEmptyError();
 	}
-
-	private pathEqualsCurrentFilePath(path: string): boolean {
-		return path === this._app.workspace.getActiveFile()?.path;
-	}
 }

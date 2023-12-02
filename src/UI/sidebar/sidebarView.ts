@@ -10,6 +10,7 @@ import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { NoteSetEditModal } from "../noteset/noteSetEditModal";
+import { NoteSetEmptyError } from "src/noteSet/noteSetService";
 
 export class SimpleNoteReviewSidebarView extends ItemView {
 	static readonly VIEW_TYPE = "simple-note-review-sidebar-view";
@@ -161,11 +162,16 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-		if (!noteSet?.stats?.totalCount || noteSet.stats.totalCount === 0) {
+		if (noteSet?.stats?.totalCount === 0) {
 			section.addExtraButton((cb) => {
-				cb.setIcon("alert-triangle").setTooltip(
-					"this note set appears to be empty. you may want to adjust settings or refresh sidebar via button at the top of it."
-				);
+				cb.setIcon("alert-triangle")
+				.setTooltip(
+					"this note set appears to be empty. if you're sure it's not, click this icon to refresh stats."
+				)
+				.onClick(async () => {
+					await this._plugin.noteSetService.updateNoteSetStats(noteSet);
+					await this.renderView();
+				});
 			});
 		}
 
@@ -229,8 +235,17 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 
 	private async startReviewWithDelegate(
 		noteSet: INoteSet,
-		delegate: (noteset: INoteSet) => void
+		delegate: (noteset: INoteSet) => Promise<void>
 	) {
+		try {
+			await delegate.bind(this._plugin.reviewService)(noteSet);
+		} catch (error) {
+			if (error instanceof NoteSetEmptyError) {
+				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
+			} 
+			throw error;
+		}
+		
 		if (this._plugin.settings.currentNoteSet !== noteSet) {
 			this._plugin.settings.currentNoteSet = noteSet;
 			await this._plugin.saveSettings();
@@ -238,8 +253,6 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				`Set current note set to ${noteSet.displayName}.`
 			);
 		}
-		delegate.bind(this._plugin.reviewService)(noteSet);
-		//delegate(noteSet);
 		this._plugin.activateView();
 	}
 }

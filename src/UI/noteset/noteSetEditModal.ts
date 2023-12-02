@@ -154,6 +154,7 @@ export class NoteSetEditModal extends Modal {
             }
         });
         this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(this._noteSet);
+        this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();
         await this._plugin.activateView();
         this._plugin.showNotice(`Note set "${this._noteSet.displayName}" saved.`);

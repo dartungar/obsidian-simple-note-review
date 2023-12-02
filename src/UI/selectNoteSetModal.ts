@@ -1,6 +1,7 @@
 import SimpleNoteReviewPlugin from "main";
 import { App, SuggestModal } from "obsidian";
 import { INoteSet } from "../noteSet/INoteSet";
+import { NoteSetEmptyError } from "src/noteSet/noteSetService";
 
 export class SelectNoteSetModal extends SuggestModal<INoteSet> {
     /**
@@ -34,15 +35,17 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
 
     async onChooseSuggestion(noteSet: INoteSet, evt: MouseEvent | KeyboardEvent) {
         try {
-            this._plugin.settings.currentNoteSet = noteSet;
-            this._plugin.saveSettings();
-            this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
             await this._plugin.reviewService.startReview(noteSet);
-        } catch (error) {
-            console.error(error.message);
-            this._plugin.showNotice(error.message);
-            this.open();
-        } 
+            this._plugin.settings.currentNoteSet = noteSet;
+            this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
+            this._plugin.saveSettings();
+        }         
+        catch (error) {
+			if (error instanceof NoteSetEmptyError) {
+				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
+			} 
+            throw error;
+		} 
     }  
 
 }

@@ -89,6 +89,17 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 				updateHeader(noteSet.displayName);
 
+				if (noteSet?.stats?.totalCount === 0) {
+					setting.addExtraButton((cb) => {
+						cb.setIcon("alert-triangle")
+						.setTooltip("this note set appears to be empty. if you're sure it's not, click this icon to refresh stats.")
+						.onClick(async () => {
+							await this._plugin.noteSetService.updateNoteSetStats(noteSet);
+							this.display();
+						});
+					});
+				}
+
 				setting.addExtraButton((cb) => {
 					cb.setIcon("info")
 						.setTooltip("Note set info & stats")
