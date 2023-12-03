@@ -116,7 +116,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					cb.setIcon("edit")
 						.setTooltip("Edit Note set")
 						.onClick(() => {
-							var modal = new NoteSetEditModal(noteSet, this._plugin);
+							let modal = new NoteSetEditModal(noteSet, this._plugin);
 							modal.open();
 							modal.onClose = () => {
 								this.refresh();
