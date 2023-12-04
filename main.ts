@@ -1,6 +1,5 @@
-import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import { getAPI } from "obsidian-dataview";
-import { addSimpleNoteReviewIcon } from "src/UI/icon";
 import { NoteSetService } from "src/noteSet/noteSetService";
 import { SelectNoteSetModal } from "src/UI/selectNoteSetModal";
 import {
@@ -71,9 +70,12 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			new DefaultSettings(),
 			await this.loadData()
 		);
+
+		this.settings.noteSets = this.noteSetService.sortNoteSets(this.settings.noteSets);
 	}
 
 	async saveSettings() {
+		this.settings.noteSets = this.noteSetService.sortNoteSets(this.settings.noteSets);
 		await this.saveData(this.settings);
 	}
 

@@ -1,9 +1,7 @@
 import SimpleNoteReviewPlugin from "main";
-import { App, PluginSettingTab, Setting, setIcon, debounce } from "obsidian";
-import { JoinLogicOperators } from "src/settings/joinLogicOperators";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import { NoteSetDeleteModal } from "src/UI/noteset/noteSetDeleteModal";
 import { NoteSetInfoModal } from "src/UI/noteset/noteSetInfoModal";
-import { ReviewAlgorithm } from "../settings/reviewAlgorightms";
 import { NoteSetEditModal } from "./noteset/noteSetEditModal";
 
 export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
@@ -73,7 +71,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		this._plugin.settings &&
 			this._plugin.settings.noteSets &&
-			this._plugin.settings.noteSets.forEach((noteSet) => {
+			this._plugin.settings.noteSets.forEach((noteSet, index) => {
 				this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(
 					noteSet
 				);
@@ -112,11 +110,41 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 						});
 				});
 
+				setting.addExtraButton(cb => {
+					cb.setIcon('arrow-up')
+					.setTooltip("move element up")
+					.setDisabled(index === 0)
+					.onClick(() => {
+						if (index > 0) {
+							const temp = this._plugin.settings.noteSets[index - 1].sortOrder;
+							this._plugin.settings.noteSets[index - 1].sortOrder = noteSet.sortOrder;
+							noteSet.sortOrder = temp;
+							this._plugin.saveSettings();
+							this.display();
+						}
+					})
+				});
+		
+				setting.addExtraButton(cb => {
+					cb.setIcon('arrow-down')
+					.setTooltip("move element down")
+					.setDisabled(index >= this._plugin.settings.noteSets.length - 1)
+					.onClick(() => {
+						if (index < this._plugin.settings.noteSets.length - 1) {
+							const temp = this._plugin.settings.noteSets[index + 1].sortOrder;
+							this._plugin.settings.noteSets[index + 1].sortOrder = noteSet.sortOrder;
+							noteSet.sortOrder = temp;
+							this._plugin.saveSettings();
+							this.display();
+						}
+					})
+				});
+
 				setting.addExtraButton((cb) => {
 					cb.setIcon("edit")
 						.setTooltip("Edit Note set")
 						.onClick(() => {
-							let modal = new NoteSetEditModal(noteSet, this._plugin);
+							const modal = new NoteSetEditModal(noteSet, this._plugin);
 							modal.open();
 							modal.onClose = () => {
 								this.refresh();

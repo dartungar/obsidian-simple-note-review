@@ -2,14 +2,11 @@ import SimpleNoteReviewPlugin from "main";
 import {
 	ItemView,
 	Setting,
-	TAbstractFile,
 	WorkspaceLeaf,
-	setIcon,
 } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
-import { NoteSetEditModal } from "../noteset/noteSetEditModal";
 import { NoteSetEmptyError } from "src/noteSet/noteSetService";
 
 export class SimpleNoteReviewSidebarView extends ItemView {
@@ -29,7 +26,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		// Nothing to clean up.
 	}
 
-	async renderView(): Promise<any> {
+	async renderView(): Promise<void> {
 		this.contentEl.empty();
 
 		this.createGeneralActionsEl(this.contentEl);
@@ -44,7 +41,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createGeneralActionsEl(parentEl: HTMLElement): HTMLElement {
-		let actionsEl = new Setting(parentEl);
+		const actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("general actions:");
 
@@ -69,7 +66,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createCurrentFileActionsEl(parentEl: HTMLElement): HTMLElement {
-		let actionsEl = new Setting(parentEl);
+		const actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("current file actions:");
 

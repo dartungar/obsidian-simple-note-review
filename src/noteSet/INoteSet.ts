@@ -5,6 +5,7 @@ import { INoteSetStats } from "./INoteSetStats"
 // TODO: excluded tags, folders, frontmatter keys
 export interface INoteSet {
     id: number
+    sortOrder: number | undefined
     name: string
     displayName: string
     description: string
@@ -21,6 +22,7 @@ export interface INoteSet {
 
 export class EmptyNoteSet implements INoteSet {
     id: number
+    sortOrder: undefined
     name: "new note set"
     displayName: string
     description: string
