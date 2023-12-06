@@ -57,7 +57,9 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("settings")
 				.setTooltip("open plugin settings")
 				.onClick(() => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(this.app as any).setting.open();
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(this.app as any).setting.openTabById("simple-note-review");
 				});
 		});
@@ -159,16 +161,10 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-		if (noteSet?.stats?.totalCount === 0) {
+		if (noteSet?.validationError) {
 			section.addExtraButton((cb) => {
 				cb.setIcon("alert-triangle")
-				.setTooltip(
-					"this note set appears to be empty. if you're sure it's not, click this icon to refresh stats."
-				)
-				.onClick(async () => {
-					await this._plugin.noteSetService.updateNoteSetStats(noteSet);
-					await this.renderView();
-				});
+				.setTooltip(noteSet?.validationError);
 			});
 		}
 
@@ -200,7 +196,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
 				.onClick(async () =>
-					this._plugin.reviewService.resetNotesetQueue(noteSet)
+					await this._plugin.reviewService.resetNotesetQueue(noteSet)
 				);
 		});
 

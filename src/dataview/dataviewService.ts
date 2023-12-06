@@ -55,6 +55,10 @@ export class DataviewService {
         return null;
     }
 
+    public validateQuery(query: string): Promise<boolean> {
+        return this._dataviewApi.validate(query);
+    }
+
     public getPageFromPath(filepath: string): Record<string, any> {
         return this._dataviewApi.page(filepath);
     }

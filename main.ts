@@ -72,6 +72,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		);
 
 		this.settings.noteSets = this.noteSetService.sortNoteSets(this.settings.noteSets);
+		await this.noteSetService.updateAllNotesetErrors();
 	}
 
 	async saveSettings() {

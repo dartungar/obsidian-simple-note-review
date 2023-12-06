@@ -19,6 +19,8 @@ export class NoteSetService {
 	private _dataviewService = new DataviewService();
 	private _noteSetInfoService = new NoteSetInfoService(this._dataviewService);
 
+	public static readonly MATCHES_ALL_STRING = "matches all notes";
+
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
 	public async addEmptyNoteSet() {
@@ -54,6 +56,35 @@ export class NoteSetService {
 
 	public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
 		await this._noteSetInfoService.updateNoteSetStats(noteSet);
+	}
+
+	public async updateAllNotesetErrors(): Promise<void> {
+		await Promise.all(this._plugin.settings.noteSets.map(noteset => this.validateRules(noteset)));
+	}
+
+	public async validateRules(noteSet: INoteSet): Promise<void> {
+		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationError = await this.notesetRuleError(noteSet);
+		await this._plugin.saveSettings();
+	}
+
+	private async notesetRuleError(noteset: INoteSet): Promise<string | undefined> {
+		if (!noteset.queue?.filenames?.length)
+			return "noteset review queue is empty. if you are sure it should be not, try resetting queue and/or checking noteset rules.";
+
+		const customDvQueryIsValid = !noteset.dataviewQuery || this._dataviewService.validateQuery(noteset.dataviewQuery);	
+		if (!customDvQueryIsValid)
+			return "DataviewJS query is invalid";
+
+		const constructedDvQuery = this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
+		const constructedDvQueryIsValid = await this._dataviewService.validateQuery(constructedDvQuery);	
+		if (!constructedDvQueryIsValid)
+			return `noteset rules result in an invalid Dataview query: "${constructedDvQuery}".`;
+
+		const queueActual = await this._dataviewService.getNoteSetFiles(noteset);
+		if (!queueActual.length)
+			return "noteset rules do not match any notes in the vault.";
+
+		return undefined;
 	}
 
 	public sortNoteSets(noteSets: INoteSet[]): INoteSet[] {

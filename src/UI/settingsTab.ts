@@ -13,7 +13,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		this.display();
 	}
 
-	display(): void {
+	display(): void  {
 		const { containerEl } = this;
 
 		containerEl.empty();
@@ -87,14 +87,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 				updateHeader(noteSet.displayName);
 
-				if (noteSet?.stats?.totalCount === 0) {
+				if (noteSet?.validationError) {
 					setting.addExtraButton((cb) => {
 						cb.setIcon("alert-triangle")
-						.setTooltip("this note set appears to be empty. if you're sure it's not, click this icon to refresh stats.")
-						.onClick(async () => {
-							await this._plugin.noteSetService.updateNoteSetStats(noteSet);
-							this.display();
-						});
+						.setTooltip(noteSet?.validationError);
 					});
 				}
 
@@ -110,9 +106,21 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 						});
 				});
 
+				setting.addExtraButton((cb) => {
+					cb.setIcon("rotate-cw")
+						.setTooltip("Reset review queue and update stats for this note set")
+						.onClick(async () => {
+							await this._plugin.noteSetService.validateRules(noteSet);
+							await this._plugin.reviewService.resetNotesetQueue(noteSet);
+							await this._plugin.noteSetService.updateNoteSetStats(noteSet);
+							this.display();
+						}
+					);
+				});
+
 				setting.addExtraButton(cb => {
 					cb.setIcon('arrow-up')
-					.setTooltip("move element up")
+					.setTooltip("Move element up")
 					.setDisabled(index === 0)
 					.onClick(() => {
 						if (index > 0) {
@@ -127,7 +135,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 		
 				setting.addExtraButton(cb => {
 					cb.setIcon('arrow-down')
-					.setTooltip("move element down")
+					.setTooltip("Move element down")
 					.setDisabled(index >= this._plugin.settings.noteSets.length - 1)
 					.onClick(() => {
 						if (index < this._plugin.settings.noteSets.length - 1) {

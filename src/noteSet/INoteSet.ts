@@ -18,6 +18,7 @@ export interface INoteSet {
     dataviewQuery: string
     stats: INoteSetStats
     queue: INoteQueue
+    validationError: string | undefined
 }
 
 export class EmptyNoteSet implements INoteSet {
@@ -35,6 +36,7 @@ export class EmptyNoteSet implements INoteSet {
     dataviewQuery: ""
     stats: INoteSetStats
     queue: INoteQueue
+    validationError: undefined
 
     constructor(id: number) {    
         this.id = id;    
