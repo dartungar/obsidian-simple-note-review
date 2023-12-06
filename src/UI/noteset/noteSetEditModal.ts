@@ -1,5 +1,5 @@
 import SimpleNoteReviewPlugin from "main";
-import { ButtonComponent, Modal, Setting, debounce, setIcon } from "obsidian";
+import { ButtonComponent, Modal, Setting } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 
@@ -157,7 +157,7 @@ export class NoteSetEditModal extends Modal {
         this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();
         await this._plugin.activateView();
-        this._plugin.showNotice(`Note set "${this._noteSet.displayName}" saved.`);
+        this._plugin.showNotice(`Saved note set "${this._noteSet.displayName}".`);
         this.close();
     }
     

@@ -5,11 +5,9 @@ import { DataArray } from "obsidian-dataview";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { calculateNoteReviewPriority } from "src/noteSet/noteReviewPriorityHelpers";
 import {
-	OpenNextFileInNoteSetError,
 	NoteSetEmptyError,
 } from "src/noteSet/noteSetService";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
-import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
 import { DataviewService } from "src/dataview/dataviewService";
 
 export class ReviewService {
@@ -54,8 +52,8 @@ export class ReviewService {
 	public async openRandomNoteInQueue(noteSet: INoteSet) {
 		await this.createNotesetQueueIfNotExists(noteSet);
 
-		let randomIndex = Math.floor(Math.random() * noteSet.queue.filenames.length);
-    	let filePath = noteSet.queue.filenames[randomIndex];
+		const randomIndex = Math.floor(Math.random() * noteSet.queue.filenames.length);
+        const filePath = noteSet.queue.filenames[randomIndex];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getMostRecentLeaf().openFile(abstractFile as TFile);
 	}
@@ -72,13 +70,17 @@ export class ReviewService {
     }
 
     private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
-		let filePath = noteSet.queue.filenames[0];
+		const filePath = noteSet.queue.filenames[0];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
         await this._app.workspace.getMostRecentLeaf().openFile(abstractFile as TFile);
     }
 
     private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
-		let files = await this.generateNotesetQueue(noteSet);
+		if (noteSet.validationError) {
+			this._plugin.showNotice(`note set "${noteSet.displayName}" has validation errors; you might want to fix them before starting the review.`)	
+			return;
+		}
+		const files = await this.generateNotesetQueue(noteSet);
 		noteSet.queue = new NoteQueue(files);
 		await this._plugin.saveSettings();
     }

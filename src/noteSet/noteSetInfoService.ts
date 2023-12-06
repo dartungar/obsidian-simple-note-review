@@ -2,6 +2,7 @@ import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 import { INoteSet } from "./INoteSet";
 import { DataviewService } from "../dataview/dataviewService";
 import { getDateOffsetByNDays } from "src/utils/dateUtils";
+import { NoteSetService } from "./noteSetService";
 
 export class NoteSetInfoService {
 
@@ -33,10 +34,10 @@ export class NoteSetInfoService {
     private getNoteSetDescription(noteSet: INoteSet): string {
 
         if (this.queryMatchesAllNotes(noteSet)) {
-            return "matches all notes"
+            return NoteSetService.MATCHES_ALL_STRING;
         }
 
-        let desc: string[] = [];
+        const desc: string[] = [];
 
         if (noteSet.dataviewQuery && noteSet.dataviewQuery !== "") {
             desc.push(`are matched with dataviewJS query ${noteSet.dataviewQuery}; `);

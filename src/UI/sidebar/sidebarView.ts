@@ -2,14 +2,11 @@ import SimpleNoteReviewPlugin from "main";
 import {
 	ItemView,
 	Setting,
-	TAbstractFile,
 	WorkspaceLeaf,
-	setIcon,
 } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
-import { NoteSetEditModal } from "../noteset/noteSetEditModal";
 import { NoteSetEmptyError } from "src/noteSet/noteSetService";
 
 export class SimpleNoteReviewSidebarView extends ItemView {
@@ -29,7 +26,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		// Nothing to clean up.
 	}
 
-	async renderView(): Promise<any> {
+	async renderView(): Promise<void> {
 		this.contentEl.empty();
 
 		this.createGeneralActionsEl(this.contentEl);
@@ -44,7 +41,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createGeneralActionsEl(parentEl: HTMLElement): HTMLElement {
-		let actionsEl = new Setting(parentEl);
+		const actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("general actions:");
 
@@ -60,7 +57,9 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("settings")
 				.setTooltip("open plugin settings")
 				.onClick(() => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(this.app as any).setting.open();
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(this.app as any).setting.openTabById("simple-note-review");
 				});
 		});
@@ -69,7 +68,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private createCurrentFileActionsEl(parentEl: HTMLElement): HTMLElement {
-		let actionsEl = new Setting(parentEl);
+		const actionsEl = new Setting(parentEl);
 
 		actionsEl.setDesc("current file actions:");
 
@@ -162,16 +161,10 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-		if (noteSet?.stats?.totalCount === 0) {
+		if (noteSet?.validationError) {
 			section.addExtraButton((cb) => {
 				cb.setIcon("alert-triangle")
-				.setTooltip(
-					"this note set appears to be empty. if you're sure it's not, click this icon to refresh stats."
-				)
-				.onClick(async () => {
-					await this._plugin.noteSetService.updateNoteSetStats(noteSet);
-					await this.renderView();
-				});
+				.setTooltip(noteSet?.validationError);
 			});
 		}
 
@@ -203,7 +196,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
 				.onClick(async () =>
-					this._plugin.reviewService.resetNotesetQueue(noteSet)
+					await this._plugin.reviewService.resetNotesetQueue(noteSet)
 				);
 		});
 

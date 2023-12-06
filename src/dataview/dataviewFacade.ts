@@ -22,15 +22,16 @@ export class DataviewFacade {
     }
 
     public async pages(query: string): Promise<DataArray<Record<string, any>>> {
-        // this.throwIfDataviewNotInstalled();
-        // return this._api.pages(query);
         return await this.invokeAndReinitDvCacheOnError(() => this._api.pages(query));
     }
 
     public async page(filepath: string): Promise<Record<string, any>> {
-        // this.throwIfDataviewNotInstalled();
-        // return this._api.page(filepath);
         return await this.invokeAndReinitDvCacheOnError(() => this._api.page(filepath));
+    }
+
+    public async validate(query: string): Promise<boolean> {
+        const result = await this.invokeAndReinitDvCacheOnError(() => this._api.query(`LIST FROM ${query}`));
+        return result.successful;
     }
 
     public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<string> {
