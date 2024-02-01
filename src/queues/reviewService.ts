@@ -70,19 +70,34 @@ export class ReviewService {
     }
 
     private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
+		const errorMsgBase = `Error opening next note in note set ${noteSet.displayName}: `;
+		if (noteSet.queue?.filenames?.length && noteSet.queue?.filenames?.length === 0) {
+			this._plugin.showNotice(errorMsgBase + "review queue is empty.");
+			return;
+		}
 		const filePath = noteSet.queue.filenames[0];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
-        await this._app.workspace.getMostRecentLeaf().openFile(abstractFile as TFile);
+		if (!abstractFile || !(abstractFile instanceof TFile)) {
+			this._plugin.showNotice(errorMsgBase + `could not get the note file with path "${filePath}" from Obsidian.`);
+			return;
+		}
+		const leaf = this._app.workspace.getMostRecentLeaf();
+		if (!leaf) {
+			this._plugin.showNotice(errorMsgBase + "could not get a leaf from Obsidian.");
+			return;
+		}
+        await leaf.openFile(abstractFile as TFile);
     }
 
     private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
-		if (noteSet.validationError) {
-			this._plugin.showNotice(`note set "${noteSet.displayName}" has validation errors; you might want to fix them before starting the review.`)	
-			return;
-		}
 		const files = await this.generateNotesetQueue(noteSet);
 		noteSet.queue = new NoteQueue(files);
+		await this._plugin.noteSetService.validateRules(noteSet);
 		await this._plugin.saveSettings();
+		if (noteSet.validationError) {
+			this._plugin.showNotice(`Error while trying to create review queue for note set "${noteSet.displayName}":\n ${noteSet.validationError}`);	
+			return;
+		}
     }
 
 	private async createNotesetQueueIfNotExists(noteSet: INoteSet): Promise<void> {
