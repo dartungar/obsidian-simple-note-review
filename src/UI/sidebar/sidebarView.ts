@@ -195,8 +195,10 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		section.addExtraButton((cb) => {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
-				.onClick(async () =>
-					await this._plugin.reviewService.resetNotesetQueue(noteSet)
+				.onClick(async () => {
+					await this._plugin.noteSetService.validateRules(noteSet);
+					await this._plugin.reviewService.resetNotesetQueue(noteSet);
+				}
 				);
 		});
 

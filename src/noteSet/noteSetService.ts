@@ -63,7 +63,8 @@ export class NoteSetService {
 	}
 
 	public async validateRules(noteSet: INoteSet): Promise<void> {
-		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationError = await this.notesetRuleError(noteSet);
+		const notesetRuleError = await this.notesetRuleError(noteSet);
+		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationError = notesetRuleError;
 		await this._plugin.saveSettings();
 	}
 
