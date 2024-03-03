@@ -3,6 +3,7 @@ import { App } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService } from "./noteSetInfoService";
+import { NotesetValidationErrors } from "./notesetValidationErrors";
 
 export class NoteSetEmptyError extends Error {
 	message =
@@ -58,34 +59,36 @@ export class NoteSetService {
 		await this._noteSetInfoService.updateNoteSetStats(noteSet);
 	}
 
-	public async updateAllNotesetErrors(): Promise<void> {
+	public async validateAllNotesets(): Promise<void> {
 		await Promise.all(this._plugin.settings.noteSets.map(noteset => this.validateRules(noteset)));
 	}
 
 	public async validateRules(noteSet: INoteSet): Promise<void> {
-		const notesetRuleError = await this.notesetRuleError(noteSet);
-		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationError = notesetRuleError;
+		const validationErrors = await this.getValidationErrors(noteSet);
+		noteSet.validationErrors = validationErrors;
+		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationErrors = validationErrors;
 		await this._plugin.saveSettings();
 	}
 
-	private async notesetRuleError(noteset: INoteSet): Promise<string | undefined> {
+	private async getValidationErrors(noteset: INoteSet): Promise<NotesetValidationErrors[]> {
+		const errors: NotesetValidationErrors[] = []; 
 		if (!noteset.queue?.filenames?.length)
-			return "noteset review queue is empty. if you are sure it should be not, try resetting queue and/or checking noteset rules.";
+			errors.push(NotesetValidationErrors.QueueEmpty);
 
 		const customDvQueryIsValid = !noteset.dataviewQuery || this._dataviewService.validateQuery(noteset.dataviewQuery);	
 		if (!customDvQueryIsValid)
-			return "DataviewJS query is invalid";
+			errors.push(NotesetValidationErrors.CustomDataviewIncorrect);
 
 		const constructedDvQuery = this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
 		const constructedDvQueryIsValid = await this._dataviewService.validateQuery(constructedDvQuery);	
 		if (!constructedDvQueryIsValid)
-			return `noteset rules result in an invalid Dataview query: "${constructedDvQuery}".`;
+			errors.push(NotesetValidationErrors.RulesAreIncorrect)
 
 		const queueActual = await this._dataviewService.getNoteSetFiles(noteset);
 		if (!queueActual.length)
-			return "noteset rules do not match any notes in the vault.";
+			errors.push(NotesetValidationErrors.RulesDoNotMatchAnyNotes);
 
-		return undefined;
+		return errors;
 	}
 
 	public sortNoteSets(noteSets: INoteSet[]): INoteSet[] {

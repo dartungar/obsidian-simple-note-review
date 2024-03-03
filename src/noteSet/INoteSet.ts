@@ -1,6 +1,7 @@
 import { INoteQueue } from "src/queues/noteQueue"
 import { JoinLogicOperators } from "../settings/joinLogicOperators"
 import { INoteSetStats } from "./INoteSetStats"
+import { NotesetValidationErrors } from "./notesetValidationErrors"
 
 // TODO: excluded tags, folders, frontmatter keys
 export interface INoteSet {
@@ -18,7 +19,7 @@ export interface INoteSet {
     dataviewQuery: string
     stats: INoteSetStats
     queue: INoteQueue
-    validationError: string | undefined
+    validationErrors: NotesetValidationErrors[]
 }
 
 export class EmptyNoteSet implements INoteSet {
@@ -36,7 +37,7 @@ export class EmptyNoteSet implements INoteSet {
     dataviewQuery: ""
     stats: INoteSetStats
     queue: INoteQueue
-    validationError: undefined
+    validationErrors: []
 
     constructor(id: number) {    
         this.id = id;    

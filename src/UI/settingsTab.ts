@@ -87,10 +87,10 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 				updateHeader(noteSet.displayName);
 
-				if (noteSet?.validationError) {
+				if (noteSet?.validationErrors?.length > 0) {
 					setting.addExtraButton((cb) => {
 						cb.setIcon("alert-triangle")
-						.setTooltip(noteSet?.validationError);
+						.setTooltip(noteSet?.validationErrors.join(";\n"));
 					});
 				}
 

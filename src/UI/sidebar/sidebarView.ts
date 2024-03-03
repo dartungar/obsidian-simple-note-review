@@ -19,6 +19,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	async onOpen() {
+		//await this._plugin.noteSetService.validateAllNotesets();
 		await this.renderView();
 	}
 
@@ -49,7 +50,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("refresh-cw")
 				.setTooltip("refresh sidebar")
 				.onClick(async () => {
-					await this.renderView();
+					await this.onOpen();
 				});
 		});
 
@@ -161,10 +162,10 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			section.setDesc("");
 		}
 
-		if (noteSet?.validationError) {
+		if (noteSet?.validationErrors?.length > 0) {
 			section.addExtraButton((cb) => {
 				cb.setIcon("alert-triangle")
-				.setTooltip(noteSet?.validationError);
+				.setTooltip(noteSet?.validationErrors.join(";\n"));
 			});
 		}
 

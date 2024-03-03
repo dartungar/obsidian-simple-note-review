@@ -153,6 +153,8 @@ export class NoteSetEditModal extends Modal {
                 this._plugin.settings.noteSets[index] = this._noteSet;
             }
         });
+        this._plugin.noteSetService.validateRules(this._noteSet);
+        this._plugin.reviewService.resetNotesetQueue(this._noteSet);
         this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(this._noteSet);
         this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();

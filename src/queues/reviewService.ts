@@ -9,6 +9,7 @@ import {
 } from "src/noteSet/noteSetService";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { DataviewService } from "src/dataview/dataviewService";
+import { NotesetValidationErrors } from "src/noteSet/notesetValidationErrors";
 
 export class ReviewService {
     private _dataviewService = new DataviewService();
@@ -90,14 +91,23 @@ export class ReviewService {
     }
 
     private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
-		const files = await this.generateNotesetQueue(noteSet);
-		noteSet.queue = new NoteQueue(files);
-		await this._plugin.noteSetService.validateRules(noteSet);
-		await this._plugin.saveSettings();
-		if (noteSet.validationError) {
-			this._plugin.showNotice(`Error while trying to create review queue for note set "${noteSet.displayName}":\n ${noteSet.validationError}`);	
-			return;
+		try {
+			const files = await this.generateNotesetQueue(noteSet);
+			noteSet.queue = new NoteQueue(files);
+			await this._plugin.noteSetService.validateRules(noteSet);
+			await this._plugin.saveSettings();
+			if (noteSet?.validationErrors?.length > 0) {
+				const errorsString = noteSet.validationErrors.join(";\n");
+				this._plugin.showNotice(`Error while trying to create review queue for note set "${noteSet.displayName}":\n ${errorsString}`);	
+				return;
+			}	
+		} catch (NoteSetEmptyError) {
+			if (!noteSet.validationErrors.contains(NotesetValidationErrors.RulesDoNotMatchAnyNotes))
+				noteSet.validationErrors.push(NotesetValidationErrors.RulesDoNotMatchAnyNotes);
+			this._plugin.showNotice(NotesetValidationErrors.RulesDoNotMatchAnyNotes);
+			this._plugin.saveSettings();
 		}
+
     }
 
 	private async createNotesetQueueIfNotExists(noteSet: INoteSet): Promise<void> {
