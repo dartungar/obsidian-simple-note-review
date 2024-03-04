@@ -8,6 +8,10 @@ import { DataviewQueryError } from "../noteSet/noteSetService";
 export class DataviewService {
     private _dataviewApi = new DataviewFacade();
 
+    get isDataviewInitialized(): boolean {
+        return this._dataviewApi.isDataviewInitialized();
+    } 
+
     public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<Record<string, any>>> {
         const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {

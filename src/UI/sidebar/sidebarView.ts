@@ -19,7 +19,6 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	async onOpen() {
-		//await this._plugin.noteSetService.validateAllNotesets();
 		await this.renderView();
 	}
 
@@ -197,8 +196,9 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
 				.onClick(async () => {
-					await this._plugin.noteSetService.validateRules(noteSet);
+					await this._plugin.noteSetService.validateRulesAndSave(noteSet);
 					await this._plugin.reviewService.resetNotesetQueue(noteSet);
+					await this.renderView();
 				}
 				);
 		});
@@ -242,7 +242,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			throw error;
 		}
 		
-		if (this._plugin.settings.currentNoteSet !== noteSet) {
+		if (this._plugin.settings.currentNoteSet.id !== noteSet.id) {
 			this._plugin.settings.currentNoteSet = noteSet;
 			await this._plugin.saveSettings();
 			this._plugin.showNotice(
