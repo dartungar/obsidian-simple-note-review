@@ -21,6 +21,10 @@ export class DataviewFacade {
         }
     }
 
+    public isDataviewInitialized(): boolean {
+        return this._api.index.initialized;
+    }
+
     public async pages(query: string): Promise<DataArray<Record<string, any>>> {
         return await this.invokeAndReinitDvCacheOnError(() => this._api.pages(query));
     }

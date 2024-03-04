@@ -24,16 +24,12 @@ export class NoteSetService {
 
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
-	public async addEmptyNoteSet() {
-		this._plugin.settings.noteSets.push(
-			new EmptyNoteSet(
-				this._plugin.settings.noteSets.length > 0
-					? Math.max(
-							...this._plugin.settings.noteSets.map((q) => q.id)) + 1
-					: 1
-			) // id "generation"
+	public async saveNoteSet(noteSet: INoteSet) {
+		this._plugin.settings.noteSets = this._plugin.settings.noteSets.filter(
+			(x) => x.id !== noteSet.id
 		);
-		await this._plugin.saveSettings();
+		this._plugin.settings.noteSets.push(noteSet);
+		this._plugin.saveSettings();
 	}
 
 	public async deleteNoteSet(noteSet: INoteSet) {
@@ -41,6 +37,11 @@ export class NoteSetService {
 			(q) => q.id !== noteSet.id
 		);
 		await this._plugin.saveSettings();
+	}
+
+	public async addEmptyNoteSet() {
+		const emptyNoteSet = new EmptyNoteSet();
+		this.saveNoteSet(emptyNoteSet);
 	}
 
 	public updateNoteSetDisplayNames() {
@@ -53,42 +54,6 @@ export class NoteSetService {
 		this._noteSetInfoService.updateNoteSetDisplayNameAndDescription(
 			noteSet
 		);
-	}
-
-	public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
-		await this._noteSetInfoService.updateNoteSetStats(noteSet);
-	}
-
-	public async validateAllNotesets(): Promise<void> {
-		await Promise.all(this._plugin.settings.noteSets.map(noteset => this.validateRules(noteset)));
-	}
-
-	public async validateRules(noteSet: INoteSet): Promise<void> {
-		const validationErrors = await this.getValidationErrors(noteSet);
-		noteSet.validationErrors = validationErrors;
-		this._plugin.settings.noteSets.find(x => x.id === noteSet.id).validationErrors = validationErrors;
-		await this._plugin.saveSettings();
-	}
-
-	private async getValidationErrors(noteset: INoteSet): Promise<NotesetValidationErrors[]> {
-		const errors: NotesetValidationErrors[] = []; 
-		if (!noteset.queue?.filenames?.length)
-			errors.push(NotesetValidationErrors.QueueEmpty);
-
-		const customDvQueryIsValid = !noteset.dataviewQuery || this._dataviewService.validateQuery(noteset.dataviewQuery);	
-		if (!customDvQueryIsValid)
-			errors.push(NotesetValidationErrors.CustomDataviewIncorrect);
-
-		const constructedDvQuery = this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
-		const constructedDvQueryIsValid = await this._dataviewService.validateQuery(constructedDvQuery);	
-		if (!constructedDvQueryIsValid)
-			errors.push(NotesetValidationErrors.RulesAreIncorrect)
-
-		const queueActual = await this._dataviewService.getNoteSetFiles(noteset);
-		if (!queueActual.length)
-			errors.push(NotesetValidationErrors.RulesDoNotMatchAnyNotes);
-
-		return errors;
 	}
 
 	public sortNoteSets(noteSets: INoteSet[]): INoteSet[] {
@@ -114,5 +79,69 @@ export class NoteSetService {
 		filledNotes.sort((a, b) => a.sortOrder - b.sortOrder);
 
 		return filledNotes;
+	}
+
+	public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
+		await this._noteSetInfoService.updateNoteSetStats(noteSet);
+	}
+
+	public async validateAllNotesets(): Promise<void> {
+		await Promise.all(
+			this._plugin.settings.noteSets.map((noteset) =>
+				this.validateRulesAndSave(noteset)
+			)
+		);
+	}
+
+	public async validateRulesAndSave(noteSet: INoteSet): Promise<void> {
+		const validationErrors = await this.getValidationErrors(noteSet);
+		noteSet.validationErrors = validationErrors;
+
+		this.fixQueueEmptyError(noteSet);
+		await this.saveNoteSet(noteSet);
+	}
+
+	private async getValidationErrors(
+		noteset: INoteSet
+	): Promise<NotesetValidationErrors[]> {
+		const errors: NotesetValidationErrors[] = [];
+
+		if (!noteset.queue?.filenames?.length)
+			errors.push(NotesetValidationErrors.QueueEmpty);
+
+		const customDvQueryIsValid =
+			!noteset.dataviewQuery ||
+			(await this._dataviewService.validateQuery(noteset.dataviewQuery));
+		if (!customDvQueryIsValid)
+			errors.push(NotesetValidationErrors.CustomDataviewIncorrect);
+
+		const constructedDvQuery =
+			this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
+		const constructedDvQueryIsValid =
+			await this._dataviewService.validateQuery(constructedDvQuery);
+		if (!constructedDvQueryIsValid)
+			errors.push(NotesetValidationErrors.RulesAreIncorrect);
+
+		if (this._dataviewService.isDataviewInitialized) {
+			const queueActual = await this._dataviewService.getNoteSetFiles(noteset);
+
+			if (!queueActual?.length || queueActual.length === 0) {
+				errors.push(NotesetValidationErrors.RulesDoNotMatchAnyNotes);
+			}
+		}
+		return errors;
+	}
+
+	private async fixQueueEmptyError(noteSet: INoteSet): Promise<void> {
+		if (
+			noteSet.validationErrors.contains(
+				NotesetValidationErrors.QueueEmpty
+			) &&
+			!noteSet.validationErrors.contains(
+				NotesetValidationErrors.RulesDoNotMatchAnyNotes
+			)
+		) {
+			await this._plugin.reviewService.resetNotesetQueue(noteSet);
+		}
 	}
 }

@@ -23,7 +23,7 @@ export interface INoteSet {
 }
 
 export class EmptyNoteSet implements INoteSet {
-    id: number
+    id: undefined
     sortOrder: undefined
     name: "new note set"
     displayName: string
@@ -38,8 +38,4 @@ export class EmptyNoteSet implements INoteSet {
     stats: INoteSetStats
     queue: INoteQueue
     validationErrors: []
-
-    constructor(id: number) {    
-        this.id = id;    
-    }
 }
