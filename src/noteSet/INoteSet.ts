@@ -5,7 +5,7 @@ import { NotesetValidationErrors } from "./notesetValidationErrors"
 
 // TODO: excluded tags, folders, frontmatter keys
 export interface INoteSet {
-    id: number
+    id: string
     sortOrder: number | undefined
     name: string
     displayName: string
@@ -23,7 +23,7 @@ export interface INoteSet {
 }
 
 export class EmptyNoteSet implements INoteSet {
-    id: undefined
+    id = crypto.randomUUID()
     sortOrder: undefined
     name: "new note set"
     displayName: string

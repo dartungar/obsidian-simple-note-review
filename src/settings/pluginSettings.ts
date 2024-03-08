@@ -5,7 +5,7 @@ export interface SimpleNoteReviewPluginSettings {
     reviewedFieldName: string
     reviewFrequencyFieldName: string
     noteSets: INoteSet[]
-    currentNoteSet: INoteSet
+    currentNoteSetId?: string
     openNextNoteAfterReviewing: boolean
     openRandomNote: boolean
     reviewAlgorithm: ReviewAlgorithm
@@ -17,7 +17,7 @@ export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     reviewedFieldName = "reviewed";
     reviewFrequencyFieldName = "review-frequency";
     noteSets: INoteSet[] = [];
-    currentNoteSet: INoteSet = null;
+    currentNoteSetId?: string  = null;
     openNextNoteAfterReviewing = true;
     openRandomNote = false;
     reviewAlgorithm: ReviewAlgorithm.default;

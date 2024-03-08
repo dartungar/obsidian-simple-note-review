@@ -35,8 +35,8 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
 
     async onChooseSuggestion(noteSet: INoteSet, evt: MouseEvent | KeyboardEvent) {
         try {
-            await this._plugin.reviewService.startReview(noteSet);
-            this._plugin.settings.currentNoteSet = noteSet;
+            await this._plugin.reviewService.startReview(noteSet.id);
+            this._plugin.settings.currentNoteSetId = noteSet.id;
             this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
             this._plugin.saveSettings();
         }         
