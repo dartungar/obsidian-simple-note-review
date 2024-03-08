@@ -51,7 +51,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			"play",
 			"Simple Note Review: Continue Review of Current Note Set",
 			(evt: MouseEvent) => {
-				this.reviewService.startReview(this.settings.currentNoteSet);
+				this.reviewService.startReview(this.settings.currentNoteSetId);
 			}
 		);
 
@@ -60,6 +60,8 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		this.addSettingTab(
 			new SimpleNoteReviewPluginSettingsTab(this, this.app)
 		);
+
+		this.app.vault.on("delete", file => this.noteSetService.onPhysicalDeleteNote(file));
 	}
 
 	onunload() {}
@@ -93,7 +95,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "start-review",
 			name: "Start reviewing notes in current note set",
 			callback: () => {
-				this.reviewService.startReview(this.settings.currentNoteSet);
+				this.reviewService.startReview(this.settings.currentNoteSetId);
 			},
 		});
 
@@ -110,7 +112,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "Open random note from the current note set",
 			callback: () => {
 				this.reviewService.openRandomNoteInQueue(
-					this.settings.currentNoteSet
+					this.settings.currentNoteSetId
 				);
 			},
 		});
@@ -120,7 +122,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "reset queue for the current note set",
 			callback: () => {
 				this.reviewService.resetNotesetQueue(
-					this.settings.currentNoteSet
+					this.settings.currentNoteSetId
 				);
 			},
 		});
@@ -139,7 +141,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			callback: () => {
 				this.reviewService.reviewNote(
 					this.app.workspace.getActiveFile(),
-					this.settings.currentNoteSet
+					this.settings.currentNoteSetId
 				);
 			},
 		});
@@ -194,7 +196,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			callback: () => {
 				this.reviewService.skipNote(
 					this.app.workspace.getActiveFile(),
-					this.settings.currentNoteSet
+					this.settings.currentNoteSetId
 				);
 			},
 		});

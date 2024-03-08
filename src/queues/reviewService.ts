@@ -12,12 +12,14 @@ export class ReviewService {
 
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
-	public async startReview(noteSet: INoteSet): Promise<void> {
-		await this.createNotesetQueueIfNotExists(noteSet);
-		await this.openNextNoteInQueue(noteSet);
+	public async startReview(noteSetId: string): Promise<void> {
+		const noteset = this._plugin.noteSetService.getNoteSet(noteSetId);
+		await this.createNotesetQueueIfNotExists(noteset);
+		await this.openNextNoteInQueue(noteset);
 	}
 
-	public async resetNotesetQueue(noteset: INoteSet): Promise<void> {
+	public async resetNotesetQueue(noteSetId: string): Promise<void> {
+		const noteset = this._plugin.noteSetService.getNoteSet(noteSetId);
 		await this.createNotesetQueue(noteset);
 	}
 
@@ -29,10 +31,13 @@ export class ReviewService {
 	 */
 	public async reviewNote(
 		note: TAbstractFile,
-		noteSet: INoteSet
+		noteSetId: string
 	): Promise<void> {
 		// "note" must be an actual note, not folder
 		if (!(note instanceof TFile)) return;
+
+		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
+
 		try {
 			this._plugin.fileService.setReviewedToToday(note);
 			this.removeNoteFromQueue(note, noteSet);
@@ -45,7 +50,9 @@ export class ReviewService {
 		}
 	}
 
-	public async openRandomNoteInQueue(noteSet: INoteSet) {
+	public async openRandomNoteInQueue(noteSetId: string) {
+		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
+
 		await this.createNotesetQueueIfNotExists(noteSet);
 
 		const randomIndex = Math.floor(
@@ -60,12 +67,15 @@ export class ReviewService {
 
 	public async skipNote(
 		note: TAbstractFile,
-		noteSet: INoteSet
+		noteSetId: string
 	): Promise<void> {
 		// TODO: check if current note is in queue
+		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 		this.removeNoteFromQueue(note, noteSet);
 		await this.openNextNoteInQueue(noteSet);
 	}
+
+
 
 	private async removeNoteFromQueue(
 		note: TAbstractFile,

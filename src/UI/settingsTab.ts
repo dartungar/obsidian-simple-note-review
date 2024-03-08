@@ -111,7 +111,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 						.setTooltip("Reset review queue and update stats for this note set")
 						.onClick(async () => {
 							await this._plugin.noteSetService.validateRulesAndSave(noteSet);
-							await this._plugin.reviewService.resetNotesetQueue(noteSet);
+							await this._plugin.reviewService.resetNotesetQueue(noteSet.id);
 							await this._plugin.noteSetService.updateNoteSetStats(noteSet);
 							this.display();
 						}

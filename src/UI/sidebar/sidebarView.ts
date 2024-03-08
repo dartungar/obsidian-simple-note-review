@@ -122,7 +122,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.onClick(() => {
 					this._plugin.reviewService.skipNote(
 						this.app.workspace.getActiveFile(),
-						this._plugin.settings.currentNoteSet
+						this._plugin.settings.currentNoteSetId
 					);
 				});
 		});
@@ -135,7 +135,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.onClick(() => {
 					this._plugin.reviewService.reviewNote(
 						this.app.workspace.getActiveFile(),
-						this._plugin.settings.currentNoteSet
+						this._plugin.settings.currentNoteSetId
 					);
 				});
 		});
@@ -153,8 +153,8 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		section.setName(trimmedName);
 
 		if (
-			this._plugin.settings.currentNoteSet &&
-			this._plugin.settings.currentNoteSet.id === noteSet.id
+			this._plugin.settings.currentNoteSetId &&
+			this._plugin.settings.currentNoteSetId === noteSet.id
 		) {
 			section.setDesc("current note set");
 		} else {
@@ -185,7 +185,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.setTooltip("open random note from this note set")
 				.onClick(async () =>
 					this.startReviewWithDelegate(
-						noteSet,
+						noteSet.id,
 						this._plugin.reviewService.openRandomNoteInQueue
 					)
 				);
@@ -197,7 +197,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.setTooltip("reset review queue for this note set")
 				.onClick(async () => {
 					await this._plugin.noteSetService.validateRulesAndSave(noteSet);
-					await this._plugin.reviewService.resetNotesetQueue(noteSet);
+					await this._plugin.reviewService.resetNotesetQueue(noteSet.id);
 					await this.renderView();
 				}
 				);
@@ -208,7 +208,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.setTooltip("review this note set")
 				.onClick(async () =>
 					this.startReviewWithDelegate(
-						noteSet,
+						noteSet.id,
 						this._plugin.reviewService.startReview
 					)
 				);
@@ -230,20 +230,22 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	}
 
 	private async startReviewWithDelegate(
-		noteSet: INoteSet,
-		delegate: (noteset: INoteSet) => Promise<void>
+		noteSetId: string,
+		delegate: (noteSetId: string) => Promise<void>
 	) {
+		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 		try {
-			await delegate.bind(this._plugin.reviewService)(noteSet);
+			await delegate.bind(this._plugin.reviewService)(noteSetId);
 		} catch (error) {
+			const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 			if (error instanceof NoteSetEmptyError) {
 				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
 			} 
 			throw error;
 		}
 		
-		if (this._plugin.settings.currentNoteSet.id !== noteSet.id) {
-			this._plugin.settings.currentNoteSet = noteSet;
+		if (this._plugin.settings.currentNoteSetId !== noteSet.id) {
+			this._plugin.settings.currentNoteSetId = noteSet.id;
 			await this._plugin.saveSettings();
 			this._plugin.showNotice(
 				`Set current note set to ${noteSet.displayName}.`

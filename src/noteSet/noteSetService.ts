@@ -1,5 +1,5 @@
 import { EmptyNoteSet, INoteSet } from "./INoteSet";
-import { App } from "obsidian";
+import { App, TAbstractFile } from "obsidian";
 import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService } from "./noteSetInfoService";
@@ -24,7 +24,19 @@ export class NoteSetService {
 
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
+	public getNoteSet(noteSetId: string): INoteSet {
+		console.log("notesetId:", noteSetId, "notesets:", this._plugin.settings.noteSets)
+		const notesets = this._plugin.settings.noteSets.filter(x => x.id === noteSetId);
+		if (notesets.length === 0) {
+			throw new Error(`Noteset not found`);
+		}
+		return notesets[0];
+	}
+
 	public async saveNoteSet(noteSet: INoteSet) {
+		if (!noteSet.id) {
+			noteSet.id = crypto.randomUUID();
+		}
 		this._plugin.settings.noteSets = this._plugin.settings.noteSets.filter(
 			(x) => x.id !== noteSet.id
 		);
@@ -101,6 +113,11 @@ export class NoteSetService {
 		await this.saveNoteSet(noteSet);
 	}
 
+	public async onPhysicalDeleteNote(note: TAbstractFile) {
+		this._plugin.settings.noteSets.forEach(x => x.queue.filenames.remove(note.path));
+		this._plugin.saveSettings();
+	}
+
 	private async getValidationErrors(
 		noteset: INoteSet
 	): Promise<NotesetValidationErrors[]> {
@@ -141,7 +158,7 @@ export class NoteSetService {
 				NotesetValidationErrors.RulesDoNotMatchAnyNotes
 			)
 		) {
-			await this._plugin.reviewService.resetNotesetQueue(noteSet);
+			await this._plugin.reviewService.resetNotesetQueue(noteSet.id);
 		}
 	}
 }
