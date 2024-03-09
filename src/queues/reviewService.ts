@@ -143,7 +143,7 @@ export class ReviewService {
 		const pages = (
 			await this._dataviewService.getNoteSetFiles(noteSet)
 		).filter((x) => x[freqFieldname] !== ReviewFrequency.ignore);
-		let sorted: DataArray<Record<string, any>>;
+		let sorted: DataArray<Record<string, TFile>>;
 
 		if (this._plugin.settings.useReviewFrequency) {
 			sorted = pages.sort(
