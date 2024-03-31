@@ -75,8 +75,6 @@ export class ReviewService {
 		await this.openNextNoteInQueue(noteSet);
 	}
 
-
-
 	private async removeNoteFromQueue(
 		note: TAbstractFile,
 		noteSet: INoteSet
@@ -86,12 +84,9 @@ export class ReviewService {
 	}
 
 	private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
-		const errorMsgBase = `Error opening next note in note set ${noteSet.displayName}: `;
-		if (
-			noteSet.queue?.filenames?.length &&
-			noteSet.queue?.filenames?.length === 0
-		) {
-			this._plugin.showNotice(errorMsgBase + "review queue is empty.");
+		const errorMsgBase = `Error opening next note in note set ${noteSet.displayName}: \n`;
+		if (!noteSet.queue?.filenames?.length) {
+			this._plugin.showNotice(errorMsgBase + "review queue is empty. Check note set in plugin settings.");
 			return;
 		}
 		const filePath = noteSet.queue.filenames[0];
