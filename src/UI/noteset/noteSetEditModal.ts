@@ -149,7 +149,7 @@ export class NoteSetEditModal extends Modal {
 
     async save() { 
         this._plugin.settings.noteSets.forEach((noteSet, index) => {
-            if (noteSet.id == this._noteSet.id) {
+            if (noteSet.id === this._noteSet.id) {
                 this._plugin.settings.noteSets[index] = this._noteSet;
             }
         });

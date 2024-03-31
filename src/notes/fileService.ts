@@ -49,6 +49,7 @@ export class FileService {
     }
 
     private async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
+
         const frequencyValue = await this._dataviewService.getMetadataFieldValue(
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 

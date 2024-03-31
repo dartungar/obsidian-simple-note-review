@@ -25,7 +25,6 @@ export class NoteSetService {
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
 	public getNoteSet(noteSetId: string): INoteSet {
-		console.log("notesetId:", noteSetId, "notesets:", this._plugin.settings.noteSets)
 		const notesets = this._plugin.settings.noteSets.filter(x => x.id === noteSetId);
 		if (notesets.length === 0) {
 			throw new Error(`Noteset not found`);
