@@ -121,7 +121,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "reset-queue",
 			name: "reset queue for the current note set",
 			callback: () => {
-				this.reviewService.resetNotesetQueue(
+				this.reviewService.resetNotesetQueueWithValidation(
 					this.settings.currentNoteSetId
 				);
 			},

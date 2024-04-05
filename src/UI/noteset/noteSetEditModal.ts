@@ -154,7 +154,7 @@ export class NoteSetEditModal extends Modal {
             }
         });
         this._plugin.noteSetService.validateRulesAndSave(this._noteSet);
-        this._plugin.reviewService.resetNotesetQueue(this._noteSet.id);
+        this._plugin.reviewService.resetNotesetQueueWithValidation(this._noteSet.id);
         this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(this._noteSet);
         this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();

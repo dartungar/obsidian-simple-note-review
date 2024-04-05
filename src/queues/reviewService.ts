@@ -18,9 +18,9 @@ export class ReviewService {
 		await this.openNextNoteInQueue(noteset);
 	}
 
-	public async resetNotesetQueue(noteSetId: string): Promise<void> {
+	public async resetNotesetQueueWithValidation(noteSetId: string): Promise<void> {
 		const noteset = this._plugin.noteSetService.getNoteSet(noteSetId);
-		await this.createNotesetQueue(noteset);
+		await this.createNotesetQueueWithValidation(noteset);
 	}
 
 	/** Mark note as reviewed today. If setting "open next note in noteSet after reviewing" is enabled,
@@ -108,7 +108,7 @@ export class ReviewService {
 		await leaf.openFile(abstractFile as TFile);
 	}
 
-	private async createNotesetQueue(noteSet: INoteSet): Promise<void> {
+	private async createNotesetQueueWithValidation(noteSet: INoteSet): Promise<void> {
 		const files = await this.generateNotesetQueue(noteSet);
 		noteSet.queue = new NoteQueue(files);
 		await this._plugin.noteSetService.validateRulesAndSave(noteSet);
@@ -120,6 +120,7 @@ export class ReviewService {
 		}
 	}
 
+
 	private async createNotesetQueueIfNotExists(
 		noteSet: INoteSet
 	): Promise<void> {
@@ -128,7 +129,7 @@ export class ReviewService {
 			!noteSet.queue?.filenames?.length ||
 			noteSet.queue.filenames.length === 0
 		) {
-			await this.createNotesetQueue(noteSet);
+			await this.createNotesetQueueWithValidation(noteSet);
 		}
 	}
 
