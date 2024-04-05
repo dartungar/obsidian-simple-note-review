@@ -197,7 +197,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				.setTooltip("reset review queue for this note set")
 				.onClick(async () => {
 					await this._plugin.noteSetService.validateRulesAndSave(noteSet);
-					await this._plugin.reviewService.resetNotesetQueue(noteSet.id);
+					await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
 					await this.renderView();
 				}
 				);

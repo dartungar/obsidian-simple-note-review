@@ -107,8 +107,6 @@ export class NoteSetService {
 	public async validateRulesAndSave(noteSet: INoteSet): Promise<void> {
 		const validationErrors = await this.getValidationErrors(noteSet);
 		noteSet.validationErrors = validationErrors;
-
-		this.fixQueueEmptyError(noteSet);
 		await this.saveNoteSet(noteSet);
 	}
 
@@ -146,18 +144,5 @@ export class NoteSetService {
 			}
 		}
 		return errors;
-	}
-
-	private async fixQueueEmptyError(noteSet: INoteSet): Promise<void> {
-		if (
-			noteSet.validationErrors.contains(
-				NotesetValidationErrors.QueueEmpty
-			) &&
-			!noteSet.validationErrors.contains(
-				NotesetValidationErrors.RulesDoNotMatchAnyNotes
-			)
-		) {
-			await this._plugin.reviewService.resetNotesetQueue(noteSet.id);
-		}
 	}
 }
