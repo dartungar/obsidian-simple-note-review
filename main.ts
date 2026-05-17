@@ -1,9 +1,10 @@
-import { Notice, Plugin } from "obsidian";
+import { App, Notice, Plugin } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { NoteSetService } from "src/noteSet/noteSetService";
 import { SelectNoteSetModal } from "src/UI/selectNoteSetModal";
 import {
 	DefaultSettings,
+	ReviewStartUiBehavior,
 	SimpleNoteReviewPluginSettings,
 } from "src/settings/pluginSettings";
 import { SimpleNoteReviewPluginSettingsTab } from "src/UI/settingsTab";
@@ -12,6 +13,13 @@ import { SimpleNoteReviewSidebarView } from "src/UI/sidebar/sidebarView";
 import { FileService } from "src/notes/fileService";
 import { ReviewService } from "src/queues/reviewService";
 import { NoteReviewBottomBar } from "src/UI/bottomBar/noteReviewBottomBar";
+
+interface AppWithSettings extends App {
+	setting: {
+		open(): void;
+		openTabById(id: string): void;
+	};
+}
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
@@ -54,8 +62,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			"Simple Note Review: Continue Review of Current Note Set",
 			(_evt: MouseEvent) => {
 				this.runAsync(async () => {
-					await this.reviewService.startReview(this.settings.currentNoteSetId);
-					await this.bottomBar.render();
+					await this.startReview(this.settings.currentNoteSetId);
 				});
 			}
 		);
@@ -109,6 +116,24 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		new Notice(message);
 	}
 
+	public openSettings(): void {
+		const appWithSettings = this.app as AppWithSettings;
+		appWithSettings.setting.open();
+		appWithSettings.setting.openTabById(this.manifest.id);
+	}
+
+	public async startReview(noteSetId: string): Promise<void> {
+		const noteSet = this.noteSetService.getNoteSet(noteSetId);
+		await this.reviewService.startReview(noteSet.id);
+
+		if (this.settings.currentNoteSetId !== noteSet.id) {
+			this.settings.currentNoteSetId = noteSet.id;
+			await this.saveSettings();
+		}
+
+		await this.applyReviewStartUiSettings();
+	}
+
 	private dataviewIsInstalled(): boolean {
 		return !!getAPI();
 	}
@@ -119,8 +144,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			name: "Start reviewing notes in current note set",
 			callback: () => {
 				this.runAsync(async () => {
-					await this.reviewService.startReview(this.settings.currentNoteSetId);
-					await this.bottomBar.render();
+					await this.startReview(this.settings.currentNoteSetId);
 				});
 			},
 		});
@@ -261,9 +285,17 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 	}
 
 	async activateView() {
-		this.app.workspace.detachLeavesOfType(
+		const existingLeaf = this.app.workspace.getLeavesOfType(
 			SimpleNoteReviewSidebarView.VIEW_TYPE
-		);
+		)[0];
+
+		if (existingLeaf) {
+			if (existingLeaf.view instanceof SimpleNoteReviewSidebarView) {
+				await existingLeaf.view.renderView();
+			}
+			this.app.workspace.revealLeaf(existingLeaf);
+			return;
+		}
 
 		const leaf = this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getRightLeaf(true);
 		if (!leaf) {
@@ -282,6 +314,48 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		if (sidebarLeaf) {
 			this.app.workspace.revealLeaf(sidebarLeaf);
 		}
+	}
+
+	private isSidebarOpen(): boolean {
+		return this.app.workspace.getLeavesOfType(
+			SimpleNoteReviewSidebarView.VIEW_TYPE
+		).length > 0;
+	}
+
+	private async applyReviewStartUiSettings(): Promise<void> {
+		if (this.shouldOpenBottomBarOnReviewStart()) {
+			this.bottomBar.open();
+		}
+
+		if (this.shouldOpenSidebarOnReviewStart()) {
+			await this.activateView();
+		} else {
+			await this.refreshSidebarViews();
+		}
+
+		await this.bottomBar.render();
+	}
+
+	private shouldOpenBottomBarOnReviewStart(): boolean {
+		if (this.settings.bottomBarOpenOnStart === ReviewStartUiBehavior.yes) {
+			return true;
+		}
+
+		return (
+			this.settings.bottomBarOpenOnStart === ReviewStartUiBehavior.ifOtherHidden &&
+			!this.isSidebarOpen()
+		);
+	}
+
+	private shouldOpenSidebarOnReviewStart(): boolean {
+		if (this.settings.sidebarOpenOnStart === ReviewStartUiBehavior.yes) {
+			return true;
+		}
+
+		return (
+			this.settings.sidebarOpenOnStart === ReviewStartUiBehavior.ifOtherHidden &&
+			!this.bottomBar.isOpen()
+		);
 	}
 
 	async refreshSidebarViews() {

@@ -37,11 +37,12 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
     }
 
     async onChooseSuggestion(noteSet: INoteSet, _evt: MouseEvent | KeyboardEvent) {
+        const previousNoteSetId = this._plugin.settings.currentNoteSetId;
         try {
-            await this._plugin.reviewService.startReview(noteSet.id);
-            this._plugin.settings.currentNoteSetId = noteSet.id;
-            this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
-            await this._plugin.saveSettings();
+            await this._plugin.startReview(noteSet.id);
+            if (previousNoteSetId !== noteSet.id) {
+                this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
+            }
         }         
         catch (error) {
 			if (error instanceof NoteSetEmptyError) {

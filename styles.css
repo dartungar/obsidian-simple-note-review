@@ -9,9 +9,70 @@
 	align-items: center;
 } */
 
+.simple-note-review-settings-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	margin: 0.75rem 0 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.simple-note-review-settings-tab {
+	padding: 0.45rem 0.75rem;
+	border: 0;
+	border-radius: 0.35rem 0.35rem 0 0;
+	color: var(--text-muted);
+	background: transparent;
+	cursor: pointer;
+}
+
+.simple-note-review-settings-tab:hover,
+.simple-note-review-settings-tab:focus-visible {
+	color: var(--text-normal);
+	background-color: var(--background-modifier-hover);
+}
+
+.simple-note-review-settings-tab.is-active {
+	color: var(--text-normal);
+	background-color: var(--background-secondary);
+	box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+.simple-note-review-settings-tab-content {
+	margin-top: 0.5rem;
+}
+
 /* SIDEBAR */
 .simple-note-review-muted {
 	opacity: 0.6;
+}
+
+.simple-note-review-sidebar-compact .setting-item {
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
+}
+
+.simple-note-review-sidebar-compact .setting-item-info {
+	margin-right: 0.35rem;
+}
+
+.simple-note-review-sidebar-compact .setting-item-name,
+.simple-note-review-sidebar-compact .setting-item-description {
+	font-size: var(--font-ui-smaller);
+	line-height: 1.25;
+}
+
+.simple-note-review-sidebar-compact .setting-item-control {
+	gap: 0.1rem;
+}
+
+.simple-note-review-sidebar-compact .clickable-icon {
+	padding: 0.15rem;
+}
+
+.simple-note-review-sidebar-compact h4 {
+	margin-top: 0.6rem;
+	margin-bottom: 0.3rem;
 }
 
 .simple-note-review-setting-muted {

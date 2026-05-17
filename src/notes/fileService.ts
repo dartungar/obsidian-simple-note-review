@@ -48,7 +48,9 @@ export class FileService {
         }
 
         await this._metadataService.setAndSaveMetadataFieldsValue(file, fieldsToSet);
-        this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
+        if (this._plugin.settings.showReviewNotification) {
+            this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
+        }
     }
 
     public async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {

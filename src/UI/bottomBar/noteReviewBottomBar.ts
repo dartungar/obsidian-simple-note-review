@@ -50,6 +50,10 @@ export class NoteReviewBottomBar {
 		}, 180);
 	}
 
+	public isOpen(): boolean {
+		return this.rootEl !== null;
+	}
+
 	public async render(): Promise<void> {
 		if (!this.rootEl) {
 			return;
@@ -64,7 +68,7 @@ export class NoteReviewBottomBar {
 		const currentNoteSet = this.getCurrentNoteSetOrNull();
 		this.createNoteSetSelect(statusEl, currentNoteSet);
 
-		if (currentNoteSet) {
+		if (currentNoteSet && this._plugin.settings.bottomBarShowNoteCount) {
 			statusEl.createSpan({
 				text: this._plugin.noteSetService.getQueueProgressText(currentNoteSet),
 				cls: "simple-note-review-bottom-bar-progress",
@@ -83,13 +87,15 @@ export class NoteReviewBottomBar {
 		this.createIconButton(actionsEl, "play", "continue review", async () => {
 			await this.continueReview();
 		});
-		this.createIconButton(actionsEl, "dices", "open random note", async () => {
-			const noteSet = this.requireCurrentNoteSet();
-			if (!noteSet) {
-				return;
-			}
-			await this._plugin.reviewService.openRandomNoteInQueue(noteSet.id);
-		});
+		if (this._plugin.settings.bottomBarShowRandomButton) {
+			this.createIconButton(actionsEl, "dices", "open random note", async () => {
+				const noteSet = this.requireCurrentNoteSet();
+				if (!noteSet) {
+					return;
+				}
+				await this._plugin.reviewService.openRandomNoteInQueue(noteSet.id);
+			});
+		}
 		this.createIconButton(actionsEl, "skip-forward", "skip note", async () => {
 			const noteSet = this.requireCurrentNoteSet();
 			if (!noteSet) {
@@ -140,9 +146,16 @@ export class NoteReviewBottomBar {
 
 		this.createDivider(actionsEl);
 
-		this.createIconButton(actionsEl, "panel-right", "open sidebar", async () => {
-			await this._plugin.activateView();
-		});
+		if (this._plugin.settings.bottomBarShowOpenSidebarButton) {
+			this.createIconButton(actionsEl, "panel-right", "open sidebar", async () => {
+				await this._plugin.activateView();
+			});
+		}
+		if (this._plugin.settings.bottomBarShowSettingsButton) {
+			this.createIconButton(actionsEl, "settings", "open plugin settings", () => {
+				this._plugin.openSettings();
+			});
+		}
 		this.createIconButton(actionsEl, "x", "close bottom bar", () => {
 			this.close();
 		});
@@ -275,7 +288,7 @@ export class NoteReviewBottomBar {
 			return;
 		}
 
-		await this._plugin.reviewService.startReview(noteSet.id);
+		await this._plugin.startReview(noteSet.id);
 	}
 
 	private openCurrentNoteSetInfo(): void {
