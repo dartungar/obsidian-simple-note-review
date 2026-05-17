@@ -13,9 +13,11 @@ export class FileService {
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
-    public async setReviewFrequency(note: TAbstractFile, frequency: ReviewFrequency): Promise<void> {
-        if (!(note instanceof TFile))
+    public async setReviewFrequency(note: TAbstractFile | null, frequency: ReviewFrequency): Promise<void> {
+        if (!(note instanceof TFile)) {
+            this._plugin.showNotice("No active note selected.");
             return;
+        }
         try {
             await this._metadataService.setAndSaveMetadataFieldValue(note, 
                 {
@@ -23,7 +25,7 @@ export class FileService {
                     value: frequency
                 });
         } catch (error) {
-            this._plugin.showNotice(error.message);
+            this._plugin.showNotice(this.getErrorMessage(error));
             throw error;
         }
     }
@@ -55,5 +57,9 @@ export class FileService {
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 
         return getReviewFrequencyFromMetadataValue(frequencyValue);
+    }
+
+    private getErrorMessage(error: unknown): string {
+        return error instanceof Error ? error.message : String(error);
     }
 }

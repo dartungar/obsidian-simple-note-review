@@ -25,6 +25,9 @@ export class NoteSetService {
 	constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) {}
 
 	public getNoteSet(noteSetId: string): INoteSet {
+		if (!noteSetId) {
+			throw new Error("No current note set selected.");
+		}
 		const notesets = this._plugin.settings.noteSets.filter(x => x.id === noteSetId);
 		if (notesets.length === 0) {
 			throw new Error(`Noteset not found`);
@@ -33,6 +36,7 @@ export class NoteSetService {
 	}
 
 	public async saveNoteSet(noteSet: INoteSet) {
+		noteSet = this.normalizeNoteSet(noteSet);
 		if (!noteSet.id) {
 			noteSet.id = crypto.randomUUID();
 		}
@@ -55,6 +59,45 @@ export class NoteSetService {
 		await this.saveNoteSet(emptyNoteSet);
 	}
 
+	public normalizeNoteSets(noteSets: INoteSet[]): INoteSet[] {
+		return (noteSets ?? []).map((noteSet) => this.normalizeNoteSet(noteSet));
+	}
+
+	public normalizeNoteSet(noteSet: Partial<INoteSet>): INoteSet {
+		const defaults = new EmptyNoteSet();
+		const stats = noteSet.stats ?? defaults.stats;
+		const queue = noteSet.queue ?? defaults.queue;
+
+		return {
+			...defaults,
+			...noteSet,
+			id: noteSet.id || defaults.id,
+			sortOrder: noteSet.sortOrder,
+			name: noteSet.name ?? defaults.name,
+			displayName: noteSet.displayName ?? defaults.displayName,
+			description: noteSet.description ?? defaults.description,
+			tags: this.normalizeStringArray(noteSet.tags),
+			tagsJoinType: noteSet.tagsJoinType ?? defaults.tagsJoinType,
+			folders: this.normalizeStringArray(noteSet.folders),
+			foldersToTagsJoinType: noteSet.foldersToTagsJoinType ?? defaults.foldersToTagsJoinType,
+			createdInLastNDays: this.normalizeOptionalNumber(noteSet.createdInLastNDays),
+			modifiedInLastNDays: this.normalizeOptionalNumber(noteSet.modifiedInLastNDays),
+			dataviewQuery: noteSet.dataviewQuery ?? defaults.dataviewQuery,
+			stats: {
+				totalCount: stats.totalCount ?? defaults.stats.totalCount,
+				notRewiewedCount: stats.notRewiewedCount ?? defaults.stats.notRewiewedCount,
+				reviewedLastSevenDaysCount: stats.reviewedLastSevenDaysCount ?? defaults.stats.reviewedLastSevenDaysCount,
+				reviewedLastThirtyDaysCount: stats.reviewedLastThirtyDaysCount ?? defaults.stats.reviewedLastThirtyDaysCount,
+			},
+			queue: {
+				filenames: this.normalizeStringArray(queue.filenames),
+			},
+			validationErrors: Array.isArray(noteSet.validationErrors)
+				? noteSet.validationErrors
+				: defaults.validationErrors,
+		};
+	}
+
 	public updateNoteSetDisplayNames() {
 		this._plugin.settings.noteSets.forEach((q) =>
 			this.updateNoteSetDisplayNameAndDescription(q)
@@ -68,6 +111,8 @@ export class NoteSetService {
 	}
 
 	public sortNoteSets(noteSets: INoteSet[]): INoteSet[] {
+		noteSets = this.normalizeNoteSets(noteSets);
+
 		// Find the highest sortOrder that is defined
 		const maxSortOrder = noteSets.reduce((max, note) => {
 			if (note.sortOrder !== undefined && note.sortOrder > max) {
@@ -93,7 +138,10 @@ export class NoteSetService {
 	}
 
 	public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
-		await this._noteSetInfoService.updateNoteSetStats(noteSet);
+		await this._noteSetInfoService.updateNoteSetStats(
+			noteSet,
+			this._plugin.settings.reviewedFieldName
+		);
 	}
 
 	public async validateAllNotesets(): Promise<void> {
@@ -105,13 +153,14 @@ export class NoteSetService {
 	}
 
 	public async validateRulesAndSave(noteSet: INoteSet): Promise<void> {
+		noteSet = this.normalizeNoteSet(noteSet);
 		const validationErrors = await this.getValidationErrors(noteSet);
 		noteSet.validationErrors = validationErrors;
 		await this.saveNoteSet(noteSet);
 	}
 
 	public async onPhysicalDeleteNote(note: TAbstractFile) {
-		this._plugin.settings.noteSets.forEach(x => x.queue.filenames.remove(note.path));
+		this._plugin.settings.noteSets.forEach(x => x.queue?.filenames?.remove(note.path));
 		await this._plugin.saveSettings();
 	}
 
@@ -123,18 +172,24 @@ export class NoteSetService {
 		if (!noteset.queue?.filenames?.length)
 			errors.push(NotesetValidationErrors.QueueEmpty);
 
+		if (!this._dataviewService.isDataviewInstalled) {
+			return errors;
+		}
+
 		const customDvQueryIsValid =
 			!noteset.dataviewQuery ||
 			(await this._dataviewService.validateQuery(noteset.dataviewQuery));
 		if (!customDvQueryIsValid)
 			errors.push(NotesetValidationErrors.CustomDataviewIncorrect);
 
-		const constructedDvQuery =
-			this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
-		const constructedDvQueryIsValid =
-			await this._dataviewService.validateQuery(constructedDvQuery);
-		if (!constructedDvQueryIsValid)
-			errors.push(NotesetValidationErrors.RulesAreIncorrect);
+		if (!noteset.dataviewQuery) {
+			const constructedDvQuery =
+				this._dataviewService.getOrCreateBaseDataviewQuery(noteset);
+			const constructedDvQueryIsValid =
+				await this._dataviewService.validateQuery(constructedDvQuery);
+			if (!constructedDvQueryIsValid)
+				errors.push(NotesetValidationErrors.RulesAreIncorrect);
+		}
 
 		if (this._dataviewService.isDataviewInitialized) {
 			const queueActual = await this._dataviewService.getNoteSetFiles(noteset);
@@ -144,5 +199,20 @@ export class NoteSetService {
 			}
 		}
 		return errors;
+	}
+
+	private normalizeStringArray(value: string[]): string[] {
+		if (!Array.isArray(value)) {
+			return [];
+		}
+
+		return value
+			.filter((item) => typeof item === "string")
+			.map((item) => item.trim())
+			.filter((item) => item.length > 0);
+	}
+
+	private normalizeOptionalNumber(value: number | undefined): number | undefined {
+		return Number.isFinite(value) ? value : undefined;
 	}
 }

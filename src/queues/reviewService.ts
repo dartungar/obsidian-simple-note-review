@@ -3,6 +3,7 @@ import { App, TAbstractFile, TFile } from "obsidian";
 import { NoteQueue } from "./noteQueue";
 import { DataArray } from "obsidian-dataview";
 import { INoteSet } from "src/noteSet/INoteSet";
+import { NoteSetEmptyError } from "src/noteSet/noteSetService";
 import { calculateNoteReviewPriority, getReviewFrequencyFromMetadataValue } from "src/noteSet/noteReviewPriorityHelpers";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { DataviewService } from "src/dataview/dataviewService";
@@ -16,6 +17,9 @@ export class ReviewService {
 	public async startReview(noteSetId: string): Promise<void> {
 		const noteset = this._plugin.noteSetService.getNoteSet(noteSetId);
 		await this.createNotesetQueueIfNotExists(noteset);
+		if (!this.hasQueuedNotes(noteset)) {
+			throw new NoteSetEmptyError();
+		}
 		await this.openNextNoteInQueue(noteset);
 	}
 
@@ -31,11 +35,14 @@ export class ReviewService {
 	 * @returns Promise
 	 */
 	public async reviewNote(
-		note: TAbstractFile,
+		note: TAbstractFile | null,
 		noteSetId: string
 	): Promise<void> {
 		// "note" must be an actual note, not folder
-		if (!(note instanceof TFile)) return;
+		if (!(note instanceof TFile)) {
+			this._plugin.showNotice("No active note selected.");
+			return;
+		}
 
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 
@@ -43,7 +50,8 @@ export class ReviewService {
 			await this._plugin.fileService.setReviewedToToday(note);
 			await this.removeNoteFromQueue(note, noteSet);
 		} catch (error) {
-			this._plugin.showNotice(error.message);
+			this._plugin.showNotice(this.getErrorMessage(error));
+			return;
 		}
 
 		if (this._plugin.settings.openNextNoteAfterReviewing) {
@@ -55,6 +63,9 @@ export class ReviewService {
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 
 		await this.createNotesetQueueIfNotExists(noteSet);
+		if (!this.hasQueuedNotes(noteSet)) {
+			throw new NoteSetEmptyError();
+		}
 
 		const randomIndex = Math.floor(
 			Math.random() * noteSet.queue.filenames.length
@@ -62,25 +73,32 @@ export class ReviewService {
 		const filePath = noteSet.queue.filenames[randomIndex];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
 		if (!(abstractFile instanceof TFile)) {
+			this._plugin.showNotice(`Could not get the note file with path "${filePath}" from Obsidian.`);
 			return;
 		}
-		await this._app.workspace
-			.getMostRecentLeaf()
-			.openFile(abstractFile);
+		const leaf = this._app.workspace.getMostRecentLeaf();
+		if (!leaf) {
+			this._plugin.showNotice("Could not get a leaf from Obsidian.");
+			return;
+		}
+		await leaf.openFile(abstractFile);
 	}
 
 	public async skipNote(
-		note: TAbstractFile,
+		note: TAbstractFile | null,
 		noteSetId: string
 	): Promise<void> {
-		// TODO: check if current note is in queue
+		if (!(note instanceof TFile)) {
+			this._plugin.showNotice("No active note selected.");
+			return;
+		}
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 		await this.removeNoteFromQueue(note, noteSet);
 		await this.openNextNoteInQueue(noteSet);
 	}
 
 	private async removeNoteFromQueue(
-		note: TAbstractFile,
+		note: TFile,
 		noteSet: INoteSet
 	): Promise<void> {
 		noteSet.queue.filenames.remove(note.path);
@@ -137,6 +155,10 @@ export class ReviewService {
 		}
 	}
 
+	private hasQueuedNotes(noteSet: INoteSet): boolean {
+		return noteSet.queue?.filenames?.length > 0;
+	}
+
 	private async generateNotesetQueue(noteSet: INoteSet): Promise<string[]> {
 		const reviewedFieldName = this._plugin.settings.reviewedFieldName;
 		const freqFieldname = this._plugin.settings.reviewFrequencyFieldName;
@@ -163,5 +185,9 @@ export class ReviewService {
 
 	private noteShouldBeReviewed(note: DataviewPage, frequencyFieldName: string): boolean {
 		return getReviewFrequencyFromMetadataValue(note[frequencyFieldName]) !== ReviewFrequency.ignore;
+	}
+
+	private getErrorMessage(error: unknown): string {
+		return error instanceof Error ? error.message : String(error);
 	}
 }

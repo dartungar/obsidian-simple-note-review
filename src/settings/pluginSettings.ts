@@ -20,7 +20,7 @@ export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     currentNoteSetId?: string  = null;
     openNextNoteAfterReviewing = true;
     openRandomNote = false;
-    reviewAlgorithm: ReviewAlgorithm.default;
+    reviewAlgorithm = ReviewAlgorithm.default;
     useReviewFrequency = false;
     unreviewedNotesFirst = false;
 }

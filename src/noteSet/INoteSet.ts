@@ -24,18 +24,23 @@ export interface INoteSet {
 
 export class EmptyNoteSet implements INoteSet {
     id = crypto.randomUUID()
-    sortOrder: undefined
-    name: "new note set"
-    displayName: string
-    description: string
-    tags: []
-    tagsJoinType: JoinLogicOperators.OR
-    folders: []
-    foldersToTagsJoinType: JoinLogicOperators.OR
-    createdInLastNDays: undefined
-    modifiedInLastNDays: undefined
-    dataviewQuery: ""
-    stats: INoteSetStats
-    queue: INoteQueue
-    validationErrors: []
+    sortOrder: number | undefined = undefined
+    name = "new note set"
+    displayName = "new note set"
+    description = ""
+    tags: string[] = []
+    tagsJoinType = JoinLogicOperators.OR
+    folders: string[] = []
+    foldersToTagsJoinType = JoinLogicOperators.OR
+    createdInLastNDays: number | undefined = undefined
+    modifiedInLastNDays: number | undefined = undefined
+    dataviewQuery = ""
+    stats: INoteSetStats = {
+        totalCount: 0,
+        notRewiewedCount: 0,
+        reviewedLastSevenDaysCount: 0,
+        reviewedLastThirtyDaysCount: 0,
+    }
+    queue: INoteQueue = { filenames: [] }
+    validationErrors: NotesetValidationErrors[] = []
 }

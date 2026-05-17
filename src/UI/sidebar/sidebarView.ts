@@ -83,9 +83,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("ban")
 				.setTooltip("ignore this note in all reviews")
 				.onClick(() => {
-					void this._plugin.fileService.setReviewFrequency(
-						this.app.workspace.getActiveFile(),
-						ReviewFrequency.ignore
+					this.runAsync(() =>
+						this._plugin.fileService.setReviewFrequency(
+							this.app.workspace.getActiveFile(),
+							ReviewFrequency.ignore
+						)
 					);
 				});
 		});
@@ -94,9 +96,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-low")
 				.setTooltip("set review frequency to low")
 				.onClick(() => {
-					void this._plugin.fileService.setReviewFrequency(
-						this.app.workspace.getActiveFile(),
-						ReviewFrequency.low
+					this.runAsync(() =>
+						this._plugin.fileService.setReviewFrequency(
+							this.app.workspace.getActiveFile(),
+							ReviewFrequency.low
+						)
 					);
 				});
 		});
@@ -105,9 +109,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-medium")
 				.setTooltip("set review frequency to normal")
 				.onClick(() => {
-					void this._plugin.fileService.setReviewFrequency(
-						this.app.workspace.getActiveFile(),
-						ReviewFrequency.normal
+					this.runAsync(() =>
+						this._plugin.fileService.setReviewFrequency(
+							this.app.workspace.getActiveFile(),
+							ReviewFrequency.normal
+						)
 					);
 				});
 		});
@@ -116,9 +122,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal")
 				.setTooltip("set review frequency to high")
 				.onClick(() => {
-					void this._plugin.fileService.setReviewFrequency(
-						this.app.workspace.getActiveFile(),
-						ReviewFrequency.high
+					this.runAsync(() =>
+						this._plugin.fileService.setReviewFrequency(
+							this.app.workspace.getActiveFile(),
+							ReviewFrequency.high
+						)
 					);
 				});
 		});
@@ -127,9 +135,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("skip-forward")
 				.setTooltip("skip note for current review")
 				.onClick(() => {
-					void this._plugin.reviewService.skipNote(
-						this.app.workspace.getActiveFile(),
-						this._plugin.settings.currentNoteSetId
+					this.runAsync(() =>
+						this._plugin.reviewService.skipNote(
+							this.app.workspace.getActiveFile(),
+							this._plugin.settings.currentNoteSetId
+						)
 					);
 				});
 		});
@@ -140,9 +150,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					"mark current note as reviewed & go to the next file"
 				)
 				.onClick(() => {
-					void this._plugin.reviewService.reviewNote(
-						this.app.workspace.getActiveFile(),
-						this._plugin.settings.currentNoteSetId
+					this.runAsync(() =>
+						this._plugin.reviewService.reviewNote(
+							this.app.workspace.getActiveFile(),
+							this._plugin.settings.currentNoteSetId
+						)
 					);
 				});
 		});
@@ -191,9 +203,11 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("dices")
 				.setTooltip("open random note from this note set")
 				.onClick(() => {
-					void this.startReviewWithDelegate(
-						noteSet.id,
-						(noteSetId) => this._plugin.reviewService.openRandomNoteInQueue(noteSetId)
+					this.runAsync(() =>
+						this.startReviewWithDelegate(
+							noteSet.id,
+							(noteSetId) => this._plugin.reviewService.openRandomNoteInQueue(noteSetId)
+						)
 					);
 				});
 		});
@@ -202,21 +216,24 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		section.addExtraButton((cb) => {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
-				.onClick(async () => {
-					await this._plugin.noteSetService.validateRulesAndSave(noteSet);
-					await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
-					await this.renderView();
-				}
-				);
+				.onClick(() => {
+					this.runAsync(async () => {
+						await this._plugin.noteSetService.validateRulesAndSave(noteSet);
+						await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
+						await this.renderView();
+					});
+				});
 		});
 
 		section.addExtraButton((cb) => {
 			cb.setIcon("play")
 				.setTooltip("review this note set")
 				.onClick(() => {
-					void this.startReviewWithDelegate(
-						noteSet.id,
-						(noteSetId) => this._plugin.reviewService.startReview(noteSetId)
+					this.runAsync(() =>
+						this.startReviewWithDelegate(
+							noteSet.id,
+							(noteSetId) => this._plugin.reviewService.startReview(noteSetId)
+						)
 					);
 				});
 		});
@@ -247,6 +264,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 			if (error instanceof NoteSetEmptyError) {
 				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
+				return;
 			} 
 			throw error;
 		}
@@ -259,5 +277,16 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			);
 		}
 		await this._plugin.activateView();
+	}
+
+	private runAsync(action: () => Promise<void>): void {
+		void action().catch((error) => {
+			this._plugin.showNotice(this.getErrorMessage(error));
+			console.error(error);
+		});
+	}
+
+	private getErrorMessage(error: unknown): string {
+		return error instanceof Error ? error.message : String(error);
 	}
 }

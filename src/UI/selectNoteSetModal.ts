@@ -46,8 +46,10 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
         catch (error) {
 			if (error instanceof NoteSetEmptyError) {
 				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
-			} 
-            throw error;
+                return;
+			}
+            this._plugin.showNotice(error instanceof Error ? error.message : String(error));
+            console.error(error);
 		} 
     }  
 

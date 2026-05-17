@@ -43,7 +43,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			this.openModalIconName,
 			"Simple Note Review: Open Sidebar View",
 			(_evt: MouseEvent) => {
-				void this.activateView();
+				this.runAsync(() => this.activateView());
 			}
 		);
 
@@ -51,7 +51,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			"play",
 			"Simple Note Review: Continue Review of Current Note Set",
 			(_evt: MouseEvent) => {
-				void this.reviewService.startReview(this.settings.currentNoteSetId);
+				this.runAsync(() => this.reviewService.startReview(this.settings.currentNoteSetId));
 			}
 		);
 
@@ -62,7 +62,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		);
 
 		this.registerEvent(this.app.vault.on("delete", (file) => {
-			void this.noteSetService.onPhysicalDeleteNote(file);
+			this.runAsync(() => this.noteSetService.onPhysicalDeleteNote(file));
 		}));
 	}
 
@@ -97,7 +97,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "start-review",
 			name: "Start reviewing notes in current note set",
 			callback: () => {
-				void this.reviewService.startReview(this.settings.currentNoteSetId);
+				this.runAsync(() => this.reviewService.startReview(this.settings.currentNoteSetId));
 			},
 		});
 
@@ -105,7 +105,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-sidebar",
 			name: "Open Sidebar View",
 			callback: () => {
-				void this.activateView();
+				this.runAsync(() => this.activateView());
 			},
 		});
 
@@ -113,8 +113,10 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-random-note",
 			name: "Open random note from the current note set",
 			callback: () => {
-				void this.reviewService.openRandomNoteInQueue(
-					this.settings.currentNoteSetId
+				this.runAsync(() =>
+					this.reviewService.openRandomNoteInQueue(
+						this.settings.currentNoteSetId
+					)
 				);
 			},
 		});
@@ -123,8 +125,10 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "reset-queue",
 			name: "reset queue for the current note set",
 			callback: () => {
-				void this.reviewService.resetNotesetQueueWithValidation(
-					this.settings.currentNoteSetId
+				this.runAsync(() =>
+					this.reviewService.resetNotesetQueueWithValidation(
+						this.settings.currentNoteSetId
+					)
 				);
 			},
 		});
@@ -141,9 +145,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "mark-current-note-as-reviewed",
 			name: "Mark current note as reviewed",
 			callback: () => {
-				void this.reviewService.reviewNote(
-					this.app.workspace.getActiveFile(),
-					this.settings.currentNoteSetId
+				this.runAsync(() =>
+					this.reviewService.reviewNote(
+						this.app.workspace.getActiveFile(),
+						this.settings.currentNoteSetId
+					)
 				);
 			},
 		});
@@ -152,9 +158,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			callback: () => {
-				void this.fileService.setReviewFrequency(
-					this.app.workspace.getActiveFile(),
-					ReviewFrequency.high
+				this.runAsync(() =>
+					this.fileService.setReviewFrequency(
+						this.app.workspace.getActiveFile(),
+						ReviewFrequency.high
+					)
 				);
 			},
 		});
@@ -163,9 +171,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			callback: () => {
-				void this.fileService.setReviewFrequency(
-					this.app.workspace.getActiveFile(),
-					ReviewFrequency.normal
+				this.runAsync(() =>
+					this.fileService.setReviewFrequency(
+						this.app.workspace.getActiveFile(),
+						ReviewFrequency.normal
+					)
 				);
 			},
 		});
@@ -174,9 +184,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			callback: () => {
-				void this.fileService.setReviewFrequency(
-					this.app.workspace.getActiveFile(),
-					ReviewFrequency.low
+				this.runAsync(() =>
+					this.fileService.setReviewFrequency(
+						this.app.workspace.getActiveFile(),
+						ReviewFrequency.low
+					)
 				);
 			},
 		});
@@ -185,9 +197,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note in all reviews)",
 			callback: () => {
-				void this.fileService.setReviewFrequency(
-					this.app.workspace.getActiveFile(),
-					ReviewFrequency.ignore
+				this.runAsync(() =>
+					this.fileService.setReviewFrequency(
+						this.app.workspace.getActiveFile(),
+						ReviewFrequency.ignore
+					)
 				);
 			},
 		});
@@ -196,9 +210,11 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "skip-note",
 			name: "Skip note from current review",
 			callback: () => {
-				void this.reviewService.skipNote(
-					this.app.workspace.getActiveFile(),
-					this.settings.currentNoteSetId
+				this.runAsync(() =>
+					this.reviewService.skipNote(
+						this.app.workspace.getActiveFile(),
+						this.settings.currentNoteSetId
+					)
 				);
 			},
 		});
@@ -209,15 +225,33 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			SimpleNoteReviewSidebarView.VIEW_TYPE
 		);
 
-		await this.app.workspace.getRightLeaf(false).setViewState({
+		const leaf = this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getRightLeaf(true);
+		if (!leaf) {
+			this.showNotice("Could not open Simple Note Review sidebar.");
+			return;
+		}
+
+		await leaf.setViewState({
 			type: SimpleNoteReviewSidebarView.VIEW_TYPE,
 			active: true,
 		});
 
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(
-				SimpleNoteReviewSidebarView.VIEW_TYPE
-			)[0]
-		);
+		const sidebarLeaf = this.app.workspace.getLeavesOfType(
+			SimpleNoteReviewSidebarView.VIEW_TYPE
+		)[0];
+		if (sidebarLeaf) {
+			this.app.workspace.revealLeaf(sidebarLeaf);
+		}
+	}
+
+	private runAsync(action: () => Promise<void>): void {
+		void action().catch((error) => {
+			this.showNotice(this.getErrorMessage(error));
+			console.error(error);
+		});
+	}
+
+	private getErrorMessage(error: unknown): string {
+		return error instanceof Error ? error.message : String(error);
 	}
 }

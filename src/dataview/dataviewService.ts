@@ -12,6 +12,10 @@ export class DataviewService {
         return this._dataviewApi.isDataviewInitialized();
     } 
 
+    get isDataviewInstalled(): boolean {
+        return this._dataviewApi.isDataviewInstalled;
+    }
+
     public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<DataviewPage>> {
         const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {
@@ -33,7 +37,7 @@ export class DataviewService {
         }
     }
 
-    public getOrCreateBaseDataviewQuery(noteSet: INoteSet): string {
+    public getOrCreateBaseDataviewQuery(noteSet: INoteSet): string | undefined {
         if (noteSet.dataviewQuery && noteSet.dataviewQuery != "") 
             return noteSet.dataviewQuery;
         
@@ -56,14 +60,14 @@ export class DataviewService {
 
         if (folders) return folders;
 
-        return null;
+        return undefined;
     }
 
-    public validateQuery(query: string): Promise<boolean> {
+    public validateQuery(query?: string): Promise<boolean> {
         return this._dataviewApi.validate(query);
     }
 
-    public getPageFromPath(filepath: string): Promise<DataviewPage> {
+    public getPageFromPath(filepath: string): Promise<DataviewPage | undefined> {
         return this._dataviewApi.page(filepath);
     }
 

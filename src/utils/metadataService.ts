@@ -1,10 +1,5 @@
 import { App, TFile } from "obsidian";
 
-// matches whole YAML frontmatter
-const FRONTMATTER_REGEX = /^---\r?\n((?:.*\r?\n)*?)---/;
-// matches any number of fields in frontmatter
-const FIELDS_REGEX_PART = '((?:.*\n)*)';
-
 export interface IMetadataField {
     name: string,
     value: string
@@ -19,13 +14,15 @@ export class MetadataService {
      * @param  {IMetadataField[]} fields
      * @returns Promise
      */
-    public async setAndSaveMetadataFieldsValue(file: TFile = null, fields: IMetadataField[]): Promise<void> {
-        const fileContent = await this._app.vault.read(file);
-        let newFileContent = fileContent;
-        for (const field of fields) {
-            newFileContent = this.setMetadataFieldValue(newFileContent, field);
-        }
-        await this._app.vault.modify(file, newFileContent);
+    public async setAndSaveMetadataFieldsValue(file: TFile, fields: IMetadataField[]): Promise<void> {
+        await this._app.fileManager.processFrontMatter(
+            file,
+            (frontmatter: Record<string, string>) => {
+                for (const field of fields) {
+                    frontmatter[field.name] = field.value;
+                }
+            }
+        );
     }
 
     /** Change or add multiple metadata fields and their values, and save modified file.
@@ -33,44 +30,8 @@ export class MetadataService {
      * @param  {IMetadataField} field
      * @returns Promise
      */
-    public async setAndSaveMetadataFieldValue(file: TFile = null, field: IMetadataField): Promise<void> {
+    public async setAndSaveMetadataFieldValue(file: TFile, field: IMetadataField): Promise<void> {
         await this.setAndSaveMetadataFieldsValue(file, [field]);
-    }
-
-    private setMetadataFieldValue(fileContent: string, data: IMetadataField): string {
-        const fieldText = `${data.name}: ${data.value}\n`;
-        let newFileContent: string;
-
-        const fieldRegex = this.createFieldRegex(data.name);
-
-        if (fieldRegex.test(fileContent)) {
-            const result = fieldRegex.exec(fileContent);
-            const partBefore = result[1];
-            const partAfter = result[3];
-            newFileContent = fileContent.replace(fieldRegex, `---\n${partBefore}${fieldText}${partAfter}---`);
-        }
-        else if (FRONTMATTER_REGEX.test(fileContent)) {
-            const metadata = FRONTMATTER_REGEX.exec(fileContent);
-            const partBefore = metadata[1];
-            newFileContent = fileContent.replace(FRONTMATTER_REGEX, `---\n${partBefore}${fieldText}---`)
-        } else {
-            newFileContent = `---\n${fieldText}---\n\n${fileContent}`;
-        }
-
-        return newFileContent;
-    }
-
-    private createSingleFieldRegexString(fieldName: string): string {
-        return `(${this.escapeRegex(fieldName)}\\s*:\\s*.*\\n)`;
-    }
-
-    private createFieldRegex(fieldName: string): RegExp {
-        // match fieldname:somevalue
-        return new RegExp(`---\\n(?:${FIELDS_REGEX_PART}${this.createSingleFieldRegexString(fieldName)}${FIELDS_REGEX_PART})---`);
-    }
-
-    private escapeRegex(value: string): string {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
 }
