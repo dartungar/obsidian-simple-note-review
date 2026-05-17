@@ -18,7 +18,9 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Simple Note Review Settings" });
+		new Setting(containerEl)
+			.setName("Simple Note Review Settings")
+			.setHeading();
 
 		// General settings
 
@@ -33,7 +35,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					.onChange((value) => {
 						this._plugin.settings.openNextNoteAfterReviewing =
 							value;
-						this._plugin.saveSettings();
+						void this._plugin.saveSettings();
 					});
 			});
 
@@ -47,11 +49,11 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					.setValue(this._plugin.settings.useReviewFrequency)
 					.onChange((value) => {
 						this._plugin.settings.useReviewFrequency = value;
-						this._plugin.saveSettings();
+						void this._plugin.saveSettings();
 					});
 			});
 
-			new Setting(containerEl)
+		new Setting(containerEl)
 			.setName("Start with unreviewed notes")
 			.setDesc(
 				"Start review with notes that have no review date. If turned off, notes without the review date will have lower priority than notes with early review dates."
@@ -61,16 +63,17 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 					.setValue(this._plugin.settings.unreviewedNotesFirst)
 					.onChange((value) => {
 						this._plugin.settings.unreviewedNotesFirst = value;
-						this._plugin.saveSettings();
+						void this._plugin.saveSettings();
 					});
 			});
 
 		// NoteSet settings
 
-		containerEl.createEl("h3", { text: "Note Sets" });
+		new Setting(containerEl)
+			.setName("Note Sets")
+			.setHeading();
 
-		this._plugin.settings &&
-			this._plugin.settings.noteSets &&
+		if (this._plugin.settings && this._plugin.settings.noteSets) {
 			this._plugin.settings.noteSets.forEach((noteSet, index) => {
 				this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(
 					noteSet
@@ -127,7 +130,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 							const temp = this._plugin.settings.noteSets[index - 1].sortOrder;
 							this._plugin.settings.noteSets[index - 1].sortOrder = noteSet.sortOrder;
 							noteSet.sortOrder = temp;
-							this._plugin.saveSettings();
+							void this._plugin.saveSettings();
 							this.display();
 						}
 					})
@@ -142,7 +145,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 							const temp = this._plugin.settings.noteSets[index + 1].sortOrder;
 							this._plugin.settings.noteSets[index + 1].sortOrder = noteSet.sortOrder;
 							noteSet.sortOrder = temp;
-							this._plugin.saveSettings();
+							void this._plugin.saveSettings();
 							this.display();
 						}
 					})
@@ -163,7 +166,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 				setting.addExtraButton((cb) => {
 					cb.setIcon("trash")
 						.setTooltip("Delete note set")
-						.onClick(async () => {
+						.onClick(() => {
 							new NoteSetDeleteModal(
 								this.app,
 								this,
@@ -173,6 +176,7 @@ export class SimpleNoteReviewPluginSettingsTab extends PluginSettingTab {
 						});
 				});
 			});
+		}
 
 		new Setting(containerEl).addButton((btn) => {
 			btn.setButtonText("Add Note Set");

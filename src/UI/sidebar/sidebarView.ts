@@ -1,5 +1,6 @@
 import SimpleNoteReviewPlugin from "main";
 import {
+	App,
 	ItemView,
 	Setting,
 	WorkspaceLeaf,
@@ -8,6 +9,13 @@ import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { NoteSetEmptyError } from "src/noteSet/noteSetService";
+
+interface AppWithSettings extends App {
+	setting: {
+		open(): void;
+		openTabById(id: string): void;
+	};
+}
 
 export class SimpleNoteReviewSidebarView extends ItemView {
 	static readonly VIEW_TYPE = "simple-note-review-sidebar-view";
@@ -57,10 +65,9 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("settings")
 				.setTooltip("open plugin settings")
 				.onClick(() => {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(this.app as any).setting.open();
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(this.app as any).setting.openTabById("simple-note-review");
+					const appWithSettings = this.app as AppWithSettings;
+					appWithSettings.setting.open();
+					appWithSettings.setting.openTabById("simple-note-review");
 				});
 		});
 
@@ -76,7 +83,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("ban")
 				.setTooltip("ignore this note in all reviews")
 				.onClick(() => {
-					this._plugin.fileService.setReviewFrequency(
+					void this._plugin.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.ignore
 					);
@@ -87,7 +94,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-low")
 				.setTooltip("set review frequency to low")
 				.onClick(() => {
-					this._plugin.fileService.setReviewFrequency(
+					void this._plugin.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.low
 					);
@@ -98,7 +105,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-medium")
 				.setTooltip("set review frequency to normal")
 				.onClick(() => {
-					this._plugin.fileService.setReviewFrequency(
+					void this._plugin.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.normal
 					);
@@ -109,7 +116,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal")
 				.setTooltip("set review frequency to high")
 				.onClick(() => {
-					this._plugin.fileService.setReviewFrequency(
+					void this._plugin.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.high
 					);
@@ -120,7 +127,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("skip-forward")
 				.setTooltip("skip note for current review")
 				.onClick(() => {
-					this._plugin.reviewService.skipNote(
+					void this._plugin.reviewService.skipNote(
 						this.app.workspace.getActiveFile(),
 						this._plugin.settings.currentNoteSetId
 					);
@@ -133,7 +140,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					"mark current note as reviewed & go to the next file"
 				)
 				.onClick(() => {
-					this._plugin.reviewService.reviewNote(
+					void this._plugin.reviewService.reviewNote(
 						this.app.workspace.getActiveFile(),
 						this._plugin.settings.currentNoteSetId
 					);
@@ -183,12 +190,12 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		section.addExtraButton((cb) => {
 			cb.setIcon("dices")
 				.setTooltip("open random note from this note set")
-				.onClick(async () =>
-					this.startReviewWithDelegate(
+				.onClick(() => {
+					void this.startReviewWithDelegate(
 						noteSet.id,
-						this._plugin.reviewService.openRandomNoteInQueue
-					)
-				);
+						(noteSetId) => this._plugin.reviewService.openRandomNoteInQueue(noteSetId)
+					);
+				});
 		});
 
 		// TODO: confirmation window
@@ -206,12 +213,12 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		section.addExtraButton((cb) => {
 			cb.setIcon("play")
 				.setTooltip("review this note set")
-				.onClick(async () =>
-					this.startReviewWithDelegate(
+				.onClick(() => {
+					void this.startReviewWithDelegate(
 						noteSet.id,
-						this._plugin.reviewService.startReview
-					)
-				);
+						(noteSetId) => this._plugin.reviewService.startReview(noteSetId)
+					);
+				});
 		});
 
 		return section.settingEl;
@@ -235,7 +242,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 	) {
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 		try {
-			await delegate.bind(this._plugin.reviewService)(noteSetId);
+			await delegate(noteSetId);
 		} catch (error) {
 			const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 			if (error instanceof NoteSetEmptyError) {
@@ -251,6 +258,6 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				`Set current note set to ${noteSet.displayName}.`
 			);
 		}
-		this._plugin.activateView();
+		await this._plugin.activateView();
 	}
 }

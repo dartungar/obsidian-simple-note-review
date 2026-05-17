@@ -11,7 +11,7 @@ export interface IMetadataField {
 }
 
 export class MetadataService {
-    constructor(private app: App) { }
+    constructor(private _app: App) { }
 
     
     /** Change or add metadata field and value, and save modified file.
@@ -20,12 +20,12 @@ export class MetadataService {
      * @returns Promise
      */
     public async setAndSaveMetadataFieldsValue(file: TFile = null, fields: IMetadataField[]): Promise<void> {
-        const fileContent = await app.vault.read(file);
+        const fileContent = await this._app.vault.read(file);
         let newFileContent = fileContent;
         for (const field of fields) {
             newFileContent = this.setMetadataFieldValue(newFileContent, field);
         }
-        await this.app.vault.modify(file, newFileContent);
+        await this._app.vault.modify(file, newFileContent);
     }
 
     /** Change or add multiple metadata fields and their values, and save modified file.
@@ -34,7 +34,7 @@ export class MetadataService {
      * @returns Promise
      */
     public async setAndSaveMetadataFieldValue(file: TFile = null, field: IMetadataField): Promise<void> {
-        this.setAndSaveMetadataFieldsValue(file, [field]);
+        await this.setAndSaveMetadataFieldsValue(file, [field]);
     }
 
     private setMetadataFieldValue(fileContent: string, data: IMetadataField): string {
@@ -61,14 +61,16 @@ export class MetadataService {
     }
 
     private createSingleFieldRegexString(fieldName: string): string {
-        //eslint-disable-next-line
-        return `(${fieldName}\s*:\s*.*\n)`;
+        return `(${this.escapeRegex(fieldName)}\\s*:\\s*.*\\n)`;
     }
 
     private createFieldRegex(fieldName: string): RegExp {
         // match fieldname:somevalue
-        //eslint-disable-next-line
-        return new RegExp(`---\n(?:${FIELDS_REGEX_PART}${this.createSingleFieldRegexString(fieldName)}${FIELDS_REGEX_PART})---`);
+        return new RegExp(`---\\n(?:${FIELDS_REGEX_PART}${this.createSingleFieldRegexString(fieldName)}${FIELDS_REGEX_PART})---`);
+    }
+
+    private escapeRegex(value: string): string {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
 }

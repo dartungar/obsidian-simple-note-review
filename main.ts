@@ -42,16 +42,16 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		this.addRibbonIcon(
 			this.openModalIconName,
 			"Simple Note Review: Open Sidebar View",
-			(evt: MouseEvent) => {
-				this.activateView();
+			(_evt: MouseEvent) => {
+				void this.activateView();
 			}
 		);
 
 		this.addRibbonIcon(
 			"play",
 			"Simple Note Review: Continue Review of Current Note Set",
-			(evt: MouseEvent) => {
-				this.reviewService.startReview(this.settings.currentNoteSetId);
+			(_evt: MouseEvent) => {
+				void this.reviewService.startReview(this.settings.currentNoteSetId);
 			}
 		);
 
@@ -61,7 +61,9 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			new SimpleNoteReviewPluginSettingsTab(this, this.app)
 		);
 
-		this.app.vault.on("delete", file => this.noteSetService.onPhysicalDeleteNote(file));
+		this.registerEvent(this.app.vault.on("delete", (file) => {
+			void this.noteSetService.onPhysicalDeleteNote(file);
+		}));
 	}
 
 	onunload() {}
@@ -95,7 +97,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "start-review",
 			name: "Start reviewing notes in current note set",
 			callback: () => {
-				this.reviewService.startReview(this.settings.currentNoteSetId);
+				void this.reviewService.startReview(this.settings.currentNoteSetId);
 			},
 		});
 
@@ -103,7 +105,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-sidebar",
 			name: "Open Sidebar View",
 			callback: () => {
-				this.activateView();
+				void this.activateView();
 			},
 		});
 
@@ -111,7 +113,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "open-random-note",
 			name: "Open random note from the current note set",
 			callback: () => {
-				this.reviewService.openRandomNoteInQueue(
+				void this.reviewService.openRandomNoteInQueue(
 					this.settings.currentNoteSetId
 				);
 			},
@@ -121,7 +123,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "reset-queue",
 			name: "reset queue for the current note set",
 			callback: () => {
-				this.reviewService.resetNotesetQueueWithValidation(
+				void this.reviewService.resetNotesetQueueWithValidation(
 					this.settings.currentNoteSetId
 				);
 			},
@@ -139,7 +141,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "mark-current-note-as-reviewed",
 			name: "Mark current note as reviewed",
 			callback: () => {
-				this.reviewService.reviewNote(
+				void this.reviewService.reviewNote(
 					this.app.workspace.getActiveFile(),
 					this.settings.currentNoteSetId
 				);
@@ -150,7 +152,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			callback: () => {
-				this.fileService.setReviewFrequency(
+				void this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.high
 				);
@@ -161,7 +163,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			callback: () => {
-				this.fileService.setReviewFrequency(
+				void this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.normal
 				);
@@ -172,7 +174,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			callback: () => {
-				this.fileService.setReviewFrequency(
+				void this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.low
 				);
@@ -183,7 +185,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note in all reviews)",
 			callback: () => {
-				this.fileService.setReviewFrequency(
+				void this.fileService.setReviewFrequency(
 					this.app.workspace.getActiveFile(),
 					ReviewFrequency.ignore
 				);
@@ -194,7 +196,7 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "skip-note",
 			name: "Skip note from current review",
 			callback: () => {
-				this.reviewService.skipNote(
+				void this.reviewService.skipNote(
 					this.app.workspace.getActiveFile(),
 					this.settings.currentNoteSetId
 				);

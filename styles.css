@@ -10,6 +10,18 @@
 } */
 
 /* SIDEBAR */
+.simple-note-review-muted {
+	opacity: 0.6;
+}
+
+.simple-note-review-setting-muted {
+	opacity: 0.5;
+}
+
+.simple-note-review-table-label {
+	padding-right: 1rem;
+}
+
 .sidebar-noteset-section {
 	display: flex;
 	flex-direction: row;

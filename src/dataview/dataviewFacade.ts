@@ -1,5 +1,15 @@
 import { getAPI, DataviewApi, DataArray } from "obsidian-dataview";
 
+export interface DataviewPage {
+    file: {
+        path: string;
+        cday: Date;
+        mday: Date;
+    };
+    reviewed?: string | Date | null;
+    [field: string]: unknown;
+}
+
 export class DataviewNotInstalledError extends Error {
     constructor() {
         super();
@@ -16,7 +26,7 @@ export class DataviewFacade {
             this._api = getAPI();
             if (this._api)
                 this.isDataviewInstalled = true;
-        } catch (error) {
+        } catch (_error) {
             throw new DataviewNotInstalledError();
         }
     }
@@ -25,12 +35,12 @@ export class DataviewFacade {
         return this._api.index.initialized;
     }
 
-    public async pages(query: string): Promise<DataArray<Record<string, any>>> {
-        return await this.invokeAndReinitDvCacheOnError(() => this._api.pages(query));
+    public async pages(query: string): Promise<DataArray<DataviewPage>> {
+        return await this.invokeAndReinitDvCacheOnError(() => this._api.pages(query)) as DataArray<DataviewPage>;
     }
 
-    public async page(filepath: string): Promise<Record<string, any>> {
-        return await this.invokeAndReinitDvCacheOnError(() => this._api.page(filepath));
+    public async page(filepath: string): Promise<DataviewPage> {
+        return await this.invokeAndReinitDvCacheOnError(() => this._api.page(filepath)) as DataviewPage;
     }
 
     public async validate(query: string): Promise<boolean> {
@@ -38,20 +48,19 @@ export class DataviewFacade {
         return result.successful;
     }
 
-    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<string> {
+    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<unknown> {
         const page = await this.page(filepath);
         return page[fieldName];
     }
 
-    private async invokeAndReinitDvCacheOnError<TReturn>(func: (...args: any[]) 
-        => TReturn, ...args: any[]): Promise<TReturn> {
+    private async invokeAndReinitDvCacheOnError<TReturn>(func: () => TReturn): Promise<TReturn> {
             try {
                 if (!this.isDataviewInstalled)
                     throw new DataviewNotInstalledError();
-                return func(args);
-            } catch (error) {
+                return func();
+            } catch (_error) {
                 await this._api.index.reinitialize();
-                return func(args);
+                return func();
             }
     }
 }

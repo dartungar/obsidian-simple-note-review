@@ -40,7 +40,7 @@ export class NoteSetService {
 			(x) => x.id !== noteSet.id
 		);
 		this._plugin.settings.noteSets.push(noteSet);
-		this._plugin.saveSettings();
+		await this._plugin.saveSettings();
 	}
 
 	public async deleteNoteSet(noteSet: INoteSet) {
@@ -52,7 +52,7 @@ export class NoteSetService {
 
 	public async addEmptyNoteSet() {
 		const emptyNoteSet = new EmptyNoteSet();
-		this.saveNoteSet(emptyNoteSet);
+		await this.saveNoteSet(emptyNoteSet);
 	}
 
 	public updateNoteSetDisplayNames() {
@@ -112,7 +112,7 @@ export class NoteSetService {
 
 	public async onPhysicalDeleteNote(note: TAbstractFile) {
 		this._plugin.settings.noteSets.forEach(x => x.queue.filenames.remove(note.path));
-		this._plugin.saveSettings();
+		await this._plugin.saveSettings();
 	}
 
 	private async getValidationErrors(

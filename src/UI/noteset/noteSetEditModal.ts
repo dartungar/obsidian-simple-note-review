@@ -7,7 +7,7 @@ import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 export class NoteSetEditModal extends Modal {
 
     constructor(private _noteSet: INoteSet, private _plugin: SimpleNoteReviewPlugin) {
-        super(app);
+        super(_plugin.app);
     }
         
     onOpen() {
@@ -61,7 +61,7 @@ export class NoteSetEditModal extends Modal {
         createdDateSetting.addText(text => {
             text.inputEl.type = 'number';
             text.setValue(`${this._noteSet.createdInLastNDays}`);
-            text.onChange(async (val) => {
+            text.onChange((val) => {
                 this._noteSet.createdInLastNDays = parseInt(val);
             } );
           });
@@ -72,7 +72,7 @@ export class NoteSetEditModal extends Modal {
         modifiedDateSetting.addText(text => {
             text.inputEl.type = 'number';
             text.setValue(`${this._noteSet.modifiedInLastNDays}`);
-            text.onChange(async (val) => {
+            text.onChange((val) => {
                 this._noteSet.modifiedInLastNDays = parseInt(val);
             } );
         });
@@ -124,19 +124,16 @@ export class NoteSetEditModal extends Modal {
 
         const saveBtn = new ButtonComponent(contentEl);
         saveBtn.setButtonText("Save");
-        saveBtn.onClick(async () => await this.save());
+        saveBtn.onClick(() => {
+            void this.save();
+        });
 
         // Helpers
 
         const updateTagsFoldersSettingsAvailability = (dataviewJsQueryValue: string) : void => {
-            const disableTagsFoldersSettings = dataviewJsQueryValue && (dataviewJsQueryValue != "");
-            if (disableTagsFoldersSettings) {
-                tagsSetting.settingEl.style.opacity = "50%";
-                foldersSetting.settingEl.style.opacity = "50%";
-            } else {
-                tagsSetting.settingEl.style.opacity = "100%";
-                foldersSetting.settingEl.style.opacity = "100%";
-            }
+            const disableTagsFoldersSettings = Boolean(dataviewJsQueryValue);
+            tagsSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
+            foldersSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
             tagsSetting.setDisabled(disableTagsFoldersSettings);
             foldersSetting.setDisabled(disableTagsFoldersSettings);
         }
@@ -153,10 +150,10 @@ export class NoteSetEditModal extends Modal {
                 this._plugin.settings.noteSets[index] = this._noteSet;
             }
         });
-        this._plugin.noteSetService.validateRulesAndSave(this._noteSet);
-        this._plugin.reviewService.resetNotesetQueueWithValidation(this._noteSet.id);
+        await this._plugin.noteSetService.validateRulesAndSave(this._noteSet);
+        await this._plugin.reviewService.resetNotesetQueueWithValidation(this._noteSet.id);
         this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(this._noteSet);
-        this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
+        await this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();
         await this._plugin.activateView();
         this._plugin.showNotice(`Saved note set "${this._noteSet.displayName}".`);

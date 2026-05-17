@@ -4,6 +4,7 @@ import { DataviewService } from "src/dataview/dataviewService";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { getTodayAsYyyyMmDd } from "src/utils/dateUtils";
 import { MetadataService } from "src/utils/metadataService";
+import { getReviewFrequencyFromMetadataValue } from "src/noteSet/noteReviewPriorityHelpers";
 
 
 export class FileService {
@@ -53,17 +54,6 @@ export class FileService {
         const frequencyValue = await this._dataviewService.getMetadataFieldValue(
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 
-        switch (frequencyValue) {
-            case ReviewFrequency.high:
-                return ReviewFrequency.high;
-            case ReviewFrequency.normal:
-                return ReviewFrequency.normal;
-            case ReviewFrequency.low:
-                return ReviewFrequency.low;
-            case ReviewFrequency.ignore:
-                return ReviewFrequency.ignore;
-            default:
-                return null;
-        }
+        return getReviewFrequencyFromMetadataValue(frequencyValue);
     }
 }

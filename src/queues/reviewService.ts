@@ -3,9 +3,10 @@ import { App, TAbstractFile, TFile } from "obsidian";
 import { NoteQueue } from "./noteQueue";
 import { DataArray } from "obsidian-dataview";
 import { INoteSet } from "src/noteSet/INoteSet";
-import { calculateNoteReviewPriority } from "src/noteSet/noteReviewPriorityHelpers";
+import { calculateNoteReviewPriority, getReviewFrequencyFromMetadataValue } from "src/noteSet/noteReviewPriorityHelpers";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { DataviewService } from "src/dataview/dataviewService";
+import { DataviewPage } from "src/dataview/dataviewFacade";
 
 export class ReviewService {
 	private _dataviewService = new DataviewService();
@@ -39,8 +40,8 @@ export class ReviewService {
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 
 		try {
-			this._plugin.fileService.setReviewedToToday(note);
-			this.removeNoteFromQueue(note, noteSet);
+			await this._plugin.fileService.setReviewedToToday(note);
+			await this.removeNoteFromQueue(note, noteSet);
 		} catch (error) {
 			this._plugin.showNotice(error.message);
 		}
@@ -60,9 +61,12 @@ export class ReviewService {
 		);
 		const filePath = noteSet.queue.filenames[randomIndex];
 		const abstractFile = this._app.vault.getAbstractFileByPath(filePath);
+		if (!(abstractFile instanceof TFile)) {
+			return;
+		}
 		await this._app.workspace
 			.getMostRecentLeaf()
-			.openFile(abstractFile as TFile);
+			.openFile(abstractFile);
 	}
 
 	public async skipNote(
@@ -71,7 +75,7 @@ export class ReviewService {
 	): Promise<void> {
 		// TODO: check if current note is in queue
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
-		this.removeNoteFromQueue(note, noteSet);
+		await this.removeNoteFromQueue(note, noteSet);
 		await this.openNextNoteInQueue(noteSet);
 	}
 
@@ -105,7 +109,7 @@ export class ReviewService {
 			);
 			return;
 		}
-		await leaf.openFile(abstractFile as TFile);
+		await leaf.openFile(abstractFile);
 	}
 
 	private async createNotesetQueueWithValidation(noteSet: INoteSet): Promise<void> {
@@ -138,8 +142,8 @@ export class ReviewService {
 		const freqFieldname = this._plugin.settings.reviewFrequencyFieldName;
 		const pages = (
 			await this._dataviewService.getNoteSetFiles(noteSet)
-		).filter((x) => x[freqFieldname] !== ReviewFrequency.ignore);
-		let sorted: DataArray<Record<string, TFile>>;
+		).filter((x) => this.noteShouldBeReviewed(x, freqFieldname));
+		let sorted: DataArray<DataviewPage>;
 
 		if (this._plugin.settings.useReviewFrequency) {
 			sorted = pages.sort(
@@ -155,5 +159,9 @@ export class ReviewService {
 		}
 
 		return [];
+	}
+
+	private noteShouldBeReviewed(note: DataviewPage, frequencyFieldName: string): boolean {
+		return getReviewFrequencyFromMetadataValue(note[frequencyFieldName]) !== ReviewFrequency.ignore;
 	}
 }

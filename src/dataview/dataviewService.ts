@@ -1,5 +1,5 @@
 import { DataArray } from "obsidian-dataview";
-import { DataviewFacade, DataviewNotInstalledError } from "src/dataview/dataviewFacade";
+import { DataviewFacade, DataviewNotInstalledError, DataviewPage } from "src/dataview/dataviewFacade";
 import { getDateOffsetByNDays } from "src/utils/dateUtils";
 import { INoteSet } from "../noteSet/INoteSet";
 import { DataviewQueryError } from "../noteSet/noteSetService";
@@ -12,7 +12,7 @@ export class DataviewService {
         return this._dataviewApi.isDataviewInitialized();
     } 
 
-    public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<Record<string, any>>> {
+    public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<DataviewPage>> {
         const query = this.getOrCreateBaseDataviewQuery(noteSet);
         try {
             let pages = await this._dataviewApi.pages(query);
@@ -27,7 +27,7 @@ export class DataviewService {
             if (error instanceof DataviewNotInstalledError) {
                 throw error;
             } else {
-                console.error(`Simple Note Review - dataview API error: ${error.message}`);
+                console.error(`Simple Note Review - dataview API error: ${error instanceof Error ? error.message : String(error)}`);
                 throw new DataviewQueryError(`Error while trying to get next note in noteset "${query}" via Dataview API. Please check noteset settings and/or disabling and enabling Simple Note Review plugin again.`)
             }
         }
@@ -63,11 +63,11 @@ export class DataviewService {
         return this._dataviewApi.validate(query);
     }
 
-    public getPageFromPath(filepath: string): Record<string, any> {
+    public getPageFromPath(filepath: string): Promise<DataviewPage> {
         return this._dataviewApi.page(filepath);
     }
 
-    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<string> {
+    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<unknown> {
         return await this._dataviewApi.getMetadataFieldValue(filepath, fieldName);
     }
 
