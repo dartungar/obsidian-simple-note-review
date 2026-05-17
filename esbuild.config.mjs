@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from 'builtin-modules'
+import { builtinModules } from "module";
 
 const banner =
 `/*
@@ -41,7 +41,7 @@ esbuild.build({
 		'@codemirror/text',
 		'@codemirror/tooltip',
 		'@codemirror/view',
-		...builtins],
+		...builtinModules],
 	format: 'cjs',
 	watch: !prod,
 	target: 'es2016',

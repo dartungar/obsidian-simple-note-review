@@ -8,13 +8,19 @@ export class NoteSetInfoService {
 
     constructor(private _dataviewService: DataviewService) {  }
 
-    public async updateNoteSetStats(noteSet: INoteSet): Promise<void> {
+    public async updateNoteSetStats(noteSet: INoteSet, reviewedFieldName = "reviewed"): Promise<void> {
         const pages = await this._dataviewService.getNoteSetFiles(noteSet);
         noteSet.stats = {
             totalCount: pages.length,
-            notRewiewedCount: pages.where(p => !p.reviewed).length, 
-            reviewedLastSevenDaysCount: pages.where(p => p.reviewed > getDateOffsetByNDays(7)).length,
-            reviewedLastThirtyDaysCount: pages.where(p => p.reviewed > getDateOffsetByNDays(30)).length
+            notRewiewedCount: pages.where(p => !this.getDateValue(p[reviewedFieldName])).length,
+            reviewedLastSevenDaysCount: pages.where(p => {
+                const reviewedDate = this.getDateValue(p[reviewedFieldName]);
+                return reviewedDate !== null && reviewedDate > getDateOffsetByNDays(7);
+            }).length,
+            reviewedLastThirtyDaysCount: pages.where(p => {
+                const reviewedDate = this.getDateValue(p[reviewedFieldName]);
+                return reviewedDate !== null && reviewedDate > getDateOffsetByNDays(30);
+            }).length
         }
     }
 
@@ -67,7 +73,33 @@ export class NoteSetInfoService {
     }
 
     private queryMatchesAllNotes(noteset: INoteSet): boolean {
-        return !(this._dataviewService.getOrCreateBaseDataviewQuery(noteset) || noteset.createdInLastNDays || noteset.createdInLastNDays);
+        return !(this._dataviewService.getOrCreateBaseDataviewQuery(noteset) || noteset.createdInLastNDays || noteset.modifiedInLastNDays);
+    }
+
+    private getDateValue(value: unknown): Date | null {
+        if (value instanceof Date) {
+            return value;
+        }
+
+        if (typeof value === "string") {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        if (this.hasToJSDate(value)) {
+            return value.toJSDate();
+        }
+
+        return null;
+    }
+
+    private hasToJSDate(value: unknown): value is { toJSDate(): Date } {
+        return (
+            typeof value === "object" &&
+            value !== null &&
+            "toJSDate" in value &&
+            typeof (value as { toJSDate?: unknown }).toJSDate === "function"
+        );
     }
 
 

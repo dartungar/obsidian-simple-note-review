@@ -15,8 +15,8 @@ export class NoteSetInfoModal extends Modal {
         contentEl.createEl("h3", {text: `Note set "${this.noteSet.displayName}"`});
         contentEl.createDiv({text: `This query ${this.noteSet.description}.`});
         contentEl.createEl("br");
-        let tableEl = contentEl.createEl("table");
-        let tbodyEl = tableEl.createEl("tbody");
+        const tableEl = contentEl.createEl("table");
+        const tbodyEl = tableEl.createEl("tbody");
 
         this.addTableRow(tbodyEl, "Total notes", this.noteSet.stats.totalCount);
         this.addTableRow(tbodyEl, "Reviewed in last 7 days", this.noteSet.stats.reviewedLastSevenDaysCount);
@@ -25,12 +25,12 @@ export class NoteSetInfoModal extends Modal {
       }
 
       private addTableRow(tbodyEl: HTMLElement, name: string, value: string | number): void {
-        let valueStr = typeof value === 'number' ? value.toString() : value;
+        const valueStr = typeof value === 'number' ? value.toString() : value;
 
-        let rowEl = tbodyEl.createEl("tr");
-        let nameRow = rowEl.createEl("td");
+        const rowEl = tbodyEl.createEl("tr");
+        const nameRow = rowEl.createEl("td");
         nameRow.setText(name);
-        nameRow.style.paddingRight = "1rem";
+        nameRow.addClass("simple-note-review-table-label");
         rowEl.createEl("td").setText(valueStr);
       }
     

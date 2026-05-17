@@ -5,9 +5,13 @@ import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 
 
 export class NoteSetEditModal extends Modal {
+    private _noteSet: INoteSet;
 
-    constructor(private _noteSet: INoteSet, private _plugin: SimpleNoteReviewPlugin) {
-        super(app);
+    constructor(noteSet: INoteSet, private _plugin: SimpleNoteReviewPlugin) {
+        super(_plugin.app);
+        this._noteSet = this._plugin.noteSetService.normalizeNoteSet(
+            JSON.parse(JSON.stringify(noteSet)) as INoteSet
+        );
     }
         
     onOpen() {
@@ -60,9 +64,9 @@ export class NoteSetEditModal extends Modal {
         createdDateSetting.setDesc(`Number of days`);			
         createdDateSetting.addText(text => {
             text.inputEl.type = 'number';
-            text.setValue(`${this._noteSet.createdInLastNDays}`);
-            text.onChange(async (val) => {
-                this._noteSet.createdInLastNDays = parseInt(val);
+            text.setValue(`${this._noteSet.createdInLastNDays ?? ""}`);
+            text.onChange((val) => {
+                this._noteSet.createdInLastNDays = this.parseOptionalNumber(val);
             } );
           });
 
@@ -71,9 +75,9 @@ export class NoteSetEditModal extends Modal {
         modifiedDateSetting.setDesc(`Number of days`);			
         modifiedDateSetting.addText(text => {
             text.inputEl.type = 'number';
-            text.setValue(`${this._noteSet.modifiedInLastNDays}`);
-            text.onChange(async (val) => {
-                this._noteSet.modifiedInLastNDays = parseInt(val);
+            text.setValue(`${this._noteSet.modifiedInLastNDays ?? ""}`);
+            text.onChange((val) => {
+                this._noteSet.modifiedInLastNDays = this.parseOptionalNumber(val);
             } );
         });
 
@@ -122,21 +126,31 @@ export class NoteSetEditModal extends Modal {
             });
         });
 
+        const previewResultEl = contentEl.createDiv({cls: ["simple-note-review-preview", "simple-note-review-muted"]});
+        const previewBtn = new ButtonComponent(contentEl);
+        previewBtn.setButtonText("Preview Matches");
+        previewBtn.onClick(() => {
+            void this.previewMatches(previewResultEl).catch((error) => {
+                this._plugin.showNotice(this.getErrorMessage(error));
+                console.error(error);
+            });
+        });
+
         const saveBtn = new ButtonComponent(contentEl);
         saveBtn.setButtonText("Save");
-        saveBtn.onClick(async () => await this.save());
+        saveBtn.onClick(() => {
+            void this.save().catch((error) => {
+                this._plugin.showNotice(this.getErrorMessage(error));
+                console.error(error);
+            });
+        });
 
         // Helpers
 
         const updateTagsFoldersSettingsAvailability = (dataviewJsQueryValue: string) : void => {
-            const disableTagsFoldersSettings = dataviewJsQueryValue && (dataviewJsQueryValue != "");
-            if (disableTagsFoldersSettings) {
-                tagsSetting.settingEl.style.opacity = "50%";
-                foldersSetting.settingEl.style.opacity = "50%";
-            } else {
-                tagsSetting.settingEl.style.opacity = "100%";
-                foldersSetting.settingEl.style.opacity = "100%";
-            }
+            const disableTagsFoldersSettings = Boolean(dataviewJsQueryValue);
+            tagsSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
+            foldersSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
             tagsSetting.setDisabled(disableTagsFoldersSettings);
             foldersSetting.setDisabled(disableTagsFoldersSettings);
         }
@@ -148,19 +162,36 @@ export class NoteSetEditModal extends Modal {
 
 
     async save() { 
+        this._noteSet = this._plugin.noteSetService.normalizeNoteSet(this._noteSet);
         this._plugin.settings.noteSets.forEach((noteSet, index) => {
             if (noteSet.id === this._noteSet.id) {
                 this._plugin.settings.noteSets[index] = this._noteSet;
             }
         });
-        this._plugin.noteSetService.validateRulesAndSave(this._noteSet);
-        this._plugin.reviewService.resetNotesetQueueWithValidation(this._noteSet.id);
+        await this._plugin.noteSetService.validateRulesAndSave(this._noteSet);
+        await this._plugin.reviewService.resetNotesetQueueWithValidation(this._noteSet.id);
         this._plugin.noteSetService.updateNoteSetDisplayNameAndDescription(this._noteSet);
-        this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
+        await this._plugin.noteSetService.updateNoteSetStats(this._noteSet);
         await this._plugin.saveSettings();
         await this._plugin.activateView();
         this._plugin.showNotice(`Saved note set "${this._noteSet.displayName}".`);
         this.close();
+    }
+
+    private parseOptionalNumber(value: string): number | undefined {
+        const parsedValue = parseInt(value, 10);
+        return Number.isNaN(parsedValue) ? undefined : parsedValue;
+    }
+
+    private async previewMatches(previewResultEl: HTMLElement): Promise<void> {
+        previewResultEl.setText("Checking matches...");
+        const previewNoteSet = this._plugin.noteSetService.normalizeNoteSet(this._noteSet);
+        const matchCount = await this._plugin.noteSetService.getMatchingNoteCount(previewNoteSet);
+        previewResultEl.setText(`${matchCount} matching note${matchCount === 1 ? "" : "s"}.`);
+    }
+
+    private getErrorMessage(error: unknown): string {
+        return error instanceof Error ? error.message : String(error);
     }
     
 }

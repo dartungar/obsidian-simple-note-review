@@ -4,6 +4,7 @@ import { DataviewService } from "src/dataview/dataviewService";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { getTodayAsYyyyMmDd } from "src/utils/dateUtils";
 import { MetadataService } from "src/utils/metadataService";
+import { getReviewFrequencyFromMetadataValue } from "src/noteSet/noteReviewPriorityHelpers";
 
 
 export class FileService {
@@ -12,9 +13,11 @@ export class FileService {
 
     constructor(private _app: App, private _plugin: SimpleNoteReviewPlugin) { }
 
-    public async setReviewFrequency(note: TAbstractFile, frequency: ReviewFrequency): Promise<void> {
-        if (!(note instanceof TFile))
+    public async setReviewFrequency(note: TAbstractFile | null, frequency: ReviewFrequency): Promise<void> {
+        if (!(note instanceof TFile)) {
+            this._plugin.showNotice("No active note selected.");
             return;
+        }
         try {
             await this._metadataService.setAndSaveMetadataFieldValue(note, 
                 {
@@ -22,7 +25,7 @@ export class FileService {
                     value: frequency
                 });
         } catch (error) {
-            this._plugin.showNotice(error.message);
+            this._plugin.showNotice(this.getErrorMessage(error));
             throw error;
         }
     }
@@ -45,25 +48,27 @@ export class FileService {
         }
 
         await this._metadataService.setAndSaveMetadataFieldsValue(file, fieldsToSet);
-        this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
+        if (this._plugin.settings.showReviewNotification) {
+            this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
+        }
     }
 
-    private async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
+    public async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
 
         const frequencyValue = await this._dataviewService.getMetadataFieldValue(
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 
-        switch (frequencyValue) {
-            case ReviewFrequency.high:
-                return ReviewFrequency.high;
-            case ReviewFrequency.normal:
-                return ReviewFrequency.normal;
-            case ReviewFrequency.low:
-                return ReviewFrequency.low;
-            case ReviewFrequency.ignore:
-                return ReviewFrequency.ignore;
-            default:
-                return null;
-        }
+        return getReviewFrequencyFromMetadataValue(frequencyValue);
+    }
+
+    public async getReviewedValue(file: TFile): Promise<unknown> {
+        return await this._dataviewService.getMetadataFieldValue(
+            file.path,
+            this._plugin.settings.reviewedFieldName
+        );
+    }
+
+    private getErrorMessage(error: unknown): string {
+        return error instanceof Error ? error.message : String(error);
     }
 }

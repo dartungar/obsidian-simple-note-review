@@ -1,5 +1,15 @@
 import { getAPI, DataviewApi, DataArray } from "obsidian-dataview";
 
+export interface DataviewPage {
+    file: {
+        path: string;
+        cday: Date;
+        mday: Date;
+    };
+    reviewed?: string | Date | null;
+    [field: string]: unknown;
+}
+
 export class DataviewNotInstalledError extends Error {
     constructor() {
         super();
@@ -8,50 +18,53 @@ export class DataviewNotInstalledError extends Error {
 }
 
 export class DataviewFacade {
-    private _api: DataviewApi;
+    private _api: DataviewApi | undefined;
     public isDataviewInstalled = false;
 
     constructor() {
-        try {
-            this._api = getAPI();
-            if (this._api)
-                this.isDataviewInstalled = true;
-        } catch (error) {
-            throw new DataviewNotInstalledError();
-        }
+        this._api = getAPI();
+        this.isDataviewInstalled = this._api !== undefined;
     }
 
     public isDataviewInitialized(): boolean {
-        return this._api.index.initialized;
+        return this._api?.index.initialized ?? false;
     }
 
-    public async pages(query: string): Promise<DataArray<Record<string, any>>> {
-        return await this.invokeAndReinitDvCacheOnError(() => this._api.pages(query));
+    public async pages(query?: string): Promise<DataArray<DataviewPage>> {
+        return await this.invokeAndReinitDvCacheOnError(() => this.api.pages(query)) as DataArray<DataviewPage>;
     }
 
-    public async page(filepath: string): Promise<Record<string, any>> {
-        return await this.invokeAndReinitDvCacheOnError(() => this._api.page(filepath));
+    public async page(filepath: string): Promise<DataviewPage | undefined> {
+        return await this.invokeAndReinitDvCacheOnError(() => this.api.page(filepath)) as DataviewPage | undefined;
     }
 
-    public async validate(query: string): Promise<boolean> {
-        const result = await this.invokeAndReinitDvCacheOnError(() => this._api.query(`LIST FROM ${query}`));
+    public async validate(query?: string): Promise<boolean> {
+        const result = await this.invokeAndReinitDvCacheOnError(() => this.api.query(query ? `LIST FROM ${query}` : "LIST"));
         return result.successful;
     }
 
-    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<string> {
+    public async getMetadataFieldValue(filepath: string, fieldName: string): Promise<unknown> {
         const page = await this.page(filepath);
-        return page[fieldName];
+        return page?.[fieldName];
     }
 
-    private async invokeAndReinitDvCacheOnError<TReturn>(func: (...args: any[]) 
-        => TReturn, ...args: any[]): Promise<TReturn> {
+    private async invokeAndReinitDvCacheOnError<TReturn>(func: () => TReturn): Promise<TReturn> {
             try {
-                if (!this.isDataviewInstalled)
-                    throw new DataviewNotInstalledError();
-                return func(args);
+                return func();
             } catch (error) {
-                await this._api.index.reinitialize();
-                return func(args);
+                if (error instanceof DataviewNotInstalledError) {
+                    throw error;
+                }
+                await this.api.index.reinitialize();
+                return func();
             }
+    }
+
+    private get api(): DataviewApi {
+        if (!this._api) {
+            throw new DataviewNotInstalledError();
+        }
+
+        return this._api;
     }
 }
