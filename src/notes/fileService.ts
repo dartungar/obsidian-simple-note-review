@@ -51,12 +51,19 @@ export class FileService {
         this._plugin.showNotice(`Marked note "${file.path}" as reviewed today.`)
     }
 
-    private async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
+    public async getReviewFrequency(file: TFile): Promise<ReviewFrequency | null> {
 
         const frequencyValue = await this._dataviewService.getMetadataFieldValue(
             file.path, this._plugin.settings.reviewFrequencyFieldName);
 
         return getReviewFrequencyFromMetadataValue(frequencyValue);
+    }
+
+    public async getReviewedValue(file: TFile): Promise<unknown> {
+        return await this._dataviewService.getMetadataFieldValue(
+            file.path,
+            this._plugin.settings.reviewedFieldName
+        );
     }
 
     private getErrorMessage(error: unknown): string {

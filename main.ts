@@ -11,12 +11,14 @@ import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { SimpleNoteReviewSidebarView } from "src/UI/sidebar/sidebarView";
 import { FileService } from "src/notes/fileService";
 import { ReviewService } from "src/queues/reviewService";
+import { NoteReviewBottomBar } from "src/UI/bottomBar/noteReviewBottomBar";
 
 export default class SimpleNoteReviewPlugin extends Plugin {
 	settings: SimpleNoteReviewPluginSettings;
 	noteSetService: NoteSetService = new NoteSetService(this.app, this);
 	reviewService: ReviewService = new ReviewService(this.app, this);
 	fileService: FileService = new FileService(this.app, this);
+	bottomBar: NoteReviewBottomBar = new NoteReviewBottomBar(this.app, this);
 
 	readonly openModalIconName: string = "glasses";
 	readonly markAsReviewedIconName: string = "checkmark";
@@ -51,7 +53,10 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			"play",
 			"Simple Note Review: Continue Review of Current Note Set",
 			(_evt: MouseEvent) => {
-				this.runAsync(() => this.reviewService.startReview(this.settings.currentNoteSetId));
+				this.runAsync(async () => {
+					await this.reviewService.startReview(this.settings.currentNoteSetId);
+					await this.bottomBar.render();
+				});
 			}
 		);
 
@@ -62,11 +67,27 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		);
 
 		this.registerEvent(this.app.vault.on("delete", (file) => {
-			this.runAsync(() => this.noteSetService.onPhysicalDeleteNote(file));
+			this.runAsync(async () => {
+				await this.noteSetService.onPhysicalDeleteNote(file);
+				await this.bottomBar.render();
+			});
+		}));
+
+		this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
+			this.runAsync(async () => {
+				await this.noteSetService.onPhysicalRenameNote(file, oldPath);
+				await this.bottomBar.render();
+			});
+		}));
+
+		this.registerEvent(this.app.workspace.on("active-leaf-change", () => {
+			this.runAsync(() => this.bottomBar.render());
 		}));
 	}
 
-	onunload() {}
+	onunload() {
+		this.bottomBar.close();
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -97,7 +118,10 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "start-review",
 			name: "Start reviewing notes in current note set",
 			callback: () => {
-				this.runAsync(() => this.reviewService.startReview(this.settings.currentNoteSetId));
+				this.runAsync(async () => {
+					await this.reviewService.startReview(this.settings.currentNoteSetId);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -110,14 +134,23 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "open-bottom-bar",
+			name: "Open Note Review Bottom Bar",
+			callback: () => {
+				this.bottomBar.open();
+			},
+		});
+
+		this.addCommand({
 			id: "open-random-note",
 			name: "Open random note from the current note set",
 			callback: () => {
-				this.runAsync(() =>
-					this.reviewService.openRandomNoteInQueue(
+				this.runAsync(async () => {
+					await this.reviewService.openRandomNoteInQueue(
 						this.settings.currentNoteSetId
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -125,11 +158,12 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "reset-queue",
 			name: "reset queue for the current note set",
 			callback: () => {
-				this.runAsync(() =>
-					this.reviewService.resetNotesetQueueWithValidation(
+				this.runAsync(async () => {
+					await this.reviewService.resetNotesetQueueWithValidation(
 						this.settings.currentNoteSetId
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -145,12 +179,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "mark-current-note-as-reviewed",
 			name: "Mark current note as reviewed",
 			callback: () => {
-				this.runAsync(() =>
-					this.reviewService.reviewNote(
+				this.runAsync(async () => {
+					await this.reviewService.reviewNote(
 						this.app.workspace.getActiveFile(),
 						this.settings.currentNoteSetId
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -158,12 +193,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-high",
 			name: "Set review frequency to high",
 			callback: () => {
-				this.runAsync(() =>
-					this.fileService.setReviewFrequency(
+				this.runAsync(async () => {
+					await this.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.high
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -171,12 +207,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-normal",
 			name: "Set review frequency to normal",
 			callback: () => {
-				this.runAsync(() =>
-					this.fileService.setReviewFrequency(
+				this.runAsync(async () => {
+					await this.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.normal
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -184,12 +221,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-low",
 			name: "Set review frequency to low",
 			callback: () => {
-				this.runAsync(() =>
-					this.fileService.setReviewFrequency(
+				this.runAsync(async () => {
+					await this.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.low
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -197,12 +235,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "set-review-frequency-ignore",
 			name: "Set review frequency to none (ignore this note in all reviews)",
 			callback: () => {
-				this.runAsync(() =>
-					this.fileService.setReviewFrequency(
+				this.runAsync(async () => {
+					await this.fileService.setReviewFrequency(
 						this.app.workspace.getActiveFile(),
 						ReviewFrequency.ignore
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 
@@ -210,12 +249,13 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 			id: "skip-note",
 			name: "Skip note from current review",
 			callback: () => {
-				this.runAsync(() =>
-					this.reviewService.skipNote(
+				this.runAsync(async () => {
+					await this.reviewService.skipNote(
 						this.app.workspace.getActiveFile(),
 						this.settings.currentNoteSetId
-					)
-				);
+					);
+					await this.bottomBar.render();
+				});
 			},
 		});
 	}
@@ -242,6 +282,18 @@ export default class SimpleNoteReviewPlugin extends Plugin {
 		if (sidebarLeaf) {
 			this.app.workspace.revealLeaf(sidebarLeaf);
 		}
+	}
+
+	async refreshSidebarViews() {
+		await Promise.all(
+			this.app.workspace
+				.getLeavesOfType(SimpleNoteReviewSidebarView.VIEW_TYPE)
+				.map(async (leaf) => {
+					if (leaf.view instanceof SimpleNoteReviewSidebarView) {
+						await leaf.view.renderView();
+					}
+				})
+		);
 	}
 
 	private runAsync(action: () => Promise<void>): void {

@@ -1,5 +1,5 @@
 import SimpleNoteReviewPlugin from "main";
-import { App, TAbstractFile, TFile } from "obsidian";
+import { App, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
 import { NoteQueue } from "./noteQueue";
 import { DataArray } from "obsidian-dataview";
 import { INoteSet } from "src/noteSet/INoteSet";
@@ -8,6 +8,7 @@ import { calculateNoteReviewPriority, getReviewFrequencyFromMetadataValue } from
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { DataviewService } from "src/dataview/dataviewService";
 import { DataviewPage } from "src/dataview/dataviewFacade";
+import { ReviewAlgorithm } from "src/settings/reviewAlgorightms";
 
 export class ReviewService {
 	private _dataviewService = new DataviewService();
@@ -54,6 +55,11 @@ export class ReviewService {
 			return;
 		}
 
+		if (!this.hasQueuedNotes(noteSet)) {
+			this.showReviewCompleteNotice(noteSet);
+			return;
+		}
+
 		if (this._plugin.settings.openNextNoteAfterReviewing) {
 			await this.openNextNoteInQueue(noteSet);
 		}
@@ -76,7 +82,7 @@ export class ReviewService {
 			this._plugin.showNotice(`Could not get the note file with path "${filePath}" from Obsidian.`);
 			return;
 		}
-		const leaf = this._app.workspace.getMostRecentLeaf();
+		const leaf = this.getLeafForNote();
 		if (!leaf) {
 			this._plugin.showNotice("Could not get a leaf from Obsidian.");
 			return;
@@ -94,6 +100,10 @@ export class ReviewService {
 		}
 		const noteSet = this._plugin.noteSetService.getNoteSet(noteSetId);
 		await this.removeNoteFromQueue(note, noteSet);
+		if (!this.hasQueuedNotes(noteSet)) {
+			this.showReviewCompleteNotice(noteSet);
+			return;
+		}
 		await this.openNextNoteInQueue(noteSet);
 	}
 
@@ -108,7 +118,7 @@ export class ReviewService {
 	private async openNextNoteInQueue(noteSet: INoteSet): Promise<void> {
 		const errorMsgBase = `Error opening next note in note set ${noteSet.displayName}: \n`;
 		if (!noteSet.queue?.filenames?.length) {
-			this._plugin.showNotice(errorMsgBase + "review queue is empty. Check note set in plugin settings.");
+			this.showReviewCompleteNotice(noteSet);
 			return;
 		}
 		const filePath = noteSet.queue.filenames[0];
@@ -120,7 +130,7 @@ export class ReviewService {
 			);
 			return;
 		}
-		const leaf = this._app.workspace.getMostRecentLeaf();
+		const leaf = this.getLeafForNote();
 		if (!leaf) {
 			this._plugin.showNotice(
 				errorMsgBase + "could not get a leaf from Obsidian."
@@ -132,7 +142,10 @@ export class ReviewService {
 
 	private async createNotesetQueueWithValidation(noteSet: INoteSet): Promise<void> {
 		const files = await this.generateNotesetQueue(noteSet);
-		noteSet.queue = new NoteQueue(files);
+		noteSet.queue = new NoteQueue(
+			files,
+			this._plugin.noteSetService.getQueueRulesHash(noteSet)
+		);
 		await this._plugin.noteSetService.validateRulesAndSave(noteSet);
 		if (noteSet?.validationErrors?.length > 0) {
 			const errorsString = noteSet.validationErrors.join(";\n");
@@ -177,7 +190,12 @@ export class ReviewService {
 		}
 
 		if (sorted.length > 0) {
-			return sorted.map((x) => x.file.path).array();
+			const filePaths = sorted.map((x) => x.file.path).array();
+			if (this._plugin.settings.reviewAlgorithm === ReviewAlgorithm.random) {
+				return this.shuffle(filePaths);
+			}
+
+			return filePaths;
 		}
 
 		return [];
@@ -185,6 +203,39 @@ export class ReviewService {
 
 	private noteShouldBeReviewed(note: DataviewPage, frequencyFieldName: string): boolean {
 		return getReviewFrequencyFromMetadataValue(note[frequencyFieldName]) !== ReviewFrequency.ignore;
+	}
+
+	private getLeafForNote(): WorkspaceLeaf | null {
+		const recentLeaf = this._app.workspace.getMostRecentLeaf();
+		if (recentLeaf?.view.getViewType() === "markdown") {
+			return recentLeaf;
+		}
+
+		const activeLeaf = this._app.workspace.getLeaf(false);
+		if (activeLeaf.view.getViewType() === "markdown") {
+			return activeLeaf;
+		}
+
+		const existingMarkdownLeaf = this._app.workspace.getLeavesOfType("markdown")[0];
+		if (existingMarkdownLeaf) {
+			return existingMarkdownLeaf;
+		}
+
+		return activeLeaf;
+	}
+
+	private shuffle(filePaths: string[]): string[] {
+		const shuffled = [...filePaths];
+		for (let index = shuffled.length - 1; index > 0; index--) {
+			const randomIndex = Math.floor(Math.random() * (index + 1));
+			[shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+		}
+
+		return shuffled;
+	}
+
+	private showReviewCompleteNotice(noteSet: INoteSet): void {
+		this._plugin.showNotice(`Finished review for "${noteSet.displayName}".`);
 	}
 
 	private getErrorMessage(error: unknown): string {

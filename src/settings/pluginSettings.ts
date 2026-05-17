@@ -7,7 +7,6 @@ export interface SimpleNoteReviewPluginSettings {
     noteSets: INoteSet[]
     currentNoteSetId?: string
     openNextNoteAfterReviewing: boolean
-    openRandomNote: boolean
     reviewAlgorithm: ReviewAlgorithm
     useReviewFrequency: boolean
     unreviewedNotesFirst: boolean
@@ -19,7 +18,6 @@ export class DefaultSettings implements SimpleNoteReviewPluginSettings {
     noteSets: INoteSet[] = [];
     currentNoteSetId?: string  = null;
     openNextNoteAfterReviewing = true;
-    openRandomNote = false;
     reviewAlgorithm = ReviewAlgorithm.default;
     useReviewFrequency = false;
     unreviewedNotesFirst = false;

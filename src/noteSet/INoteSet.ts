@@ -41,6 +41,6 @@ export class EmptyNoteSet implements INoteSet {
         reviewedLastSevenDaysCount: 0,
         reviewedLastThirtyDaysCount: 0,
     }
-    queue: INoteQueue = { filenames: [] }
+    queue: INoteQueue = { filenames: [], sourceFileCount: 0 }
     validationErrors: NotesetValidationErrors[] = []
 }

@@ -3,12 +3,14 @@ import {
 	App,
 	ItemView,
 	Setting,
+	TFile,
 	WorkspaceLeaf,
 } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "../noteset/noteSetInfoModal";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { NoteSetEmptyError } from "src/noteSet/noteSetService";
+import { NoteSetResetModal } from "../noteset/noteSetResetModal";
 
 interface AppWithSettings extends App {
 	setting: {
@@ -39,7 +41,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 
 		this.createGeneralActionsEl(this.contentEl);
 
-		this.createCurrentFileActionsEl(this.contentEl);
+		await this.createCurrentFileActionsEl(this.contentEl);
 
 		this.contentEl.createEl("h4", { text: "Note Sets" });
 
@@ -71,24 +73,34 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				});
 		});
 
+		actionsEl.addExtraButton((cb) => {
+			cb.setIcon("panel-bottom")
+				.setTooltip("open note review bottom bar")
+				.onClick(() => {
+					this._plugin.bottomBar.open();
+				});
+		});
+
 		return actionsEl.settingEl;
 	}
 
-	private createCurrentFileActionsEl(parentEl: HTMLElement): HTMLElement {
+	private async createCurrentFileActionsEl(parentEl: HTMLElement): Promise<HTMLElement> {
 		const actionsEl = new Setting(parentEl);
 
-		actionsEl.setDesc("current file actions:");
+		actionsEl.setDesc(await this.getCurrentFileActionsDescription());
 
 		actionsEl.addExtraButton((cb) => {
 			cb.setIcon("ban")
 				.setTooltip("ignore this note in all reviews")
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.fileService.setReviewFrequency(
+					this.runAsync(async () => {
+						await this._plugin.fileService.setReviewFrequency(
 							this.app.workspace.getActiveFile(),
 							ReviewFrequency.ignore
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -96,12 +108,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-low")
 				.setTooltip("set review frequency to low")
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.fileService.setReviewFrequency(
+					this.runAsync(async () => {
+						await this._plugin.fileService.setReviewFrequency(
 							this.app.workspace.getActiveFile(),
 							ReviewFrequency.low
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -109,12 +123,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal-medium")
 				.setTooltip("set review frequency to normal")
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.fileService.setReviewFrequency(
+					this.runAsync(async () => {
+						await this._plugin.fileService.setReviewFrequency(
 							this.app.workspace.getActiveFile(),
 							ReviewFrequency.normal
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -122,12 +138,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("signal")
 				.setTooltip("set review frequency to high")
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.fileService.setReviewFrequency(
+					this.runAsync(async () => {
+						await this._plugin.fileService.setReviewFrequency(
 							this.app.workspace.getActiveFile(),
 							ReviewFrequency.high
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -135,12 +153,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 			cb.setIcon("skip-forward")
 				.setTooltip("skip note for current review")
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.reviewService.skipNote(
+					this.runAsync(async () => {
+						await this._plugin.reviewService.skipNote(
 							this.app.workspace.getActiveFile(),
 							this._plugin.settings.currentNoteSetId
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -150,12 +170,14 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 					"mark current note as reviewed & go to the next file"
 				)
 				.onClick(() => {
-					this.runAsync(() =>
-						this._plugin.reviewService.reviewNote(
+					this.runAsync(async () => {
+						await this._plugin.reviewService.reviewNote(
 							this.app.workspace.getActiveFile(),
 							this._plugin.settings.currentNoteSetId
-						)
-					);
+						);
+						await this._plugin.bottomBar.render();
+						await this.renderView();
+					});
 				});
 		});
 
@@ -171,19 +193,34 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				: noteSet.displayName;
 		section.setName(trimmedName);
 
+		const descriptionParts = [
+			this._plugin.noteSetService.getQueueProgressText(noteSet),
+		];
+
 		if (
 			this._plugin.settings.currentNoteSetId &&
 			this._plugin.settings.currentNoteSetId === noteSet.id
 		) {
-			section.setDesc("current note set");
-		} else {
-			section.setDesc("");
+			descriptionParts.unshift("current note set");
 		}
+
+		const staleReasons = this._plugin.noteSetService.getQueueStaleReasons(noteSet);
+		if (staleReasons.length > 0) {
+			descriptionParts.push("queue may be stale");
+		}
+		section.setDesc(descriptionParts.join(" | "));
 
 		if (noteSet?.validationErrors?.length > 0) {
 			section.addExtraButton((cb) => {
 				cb.setIcon("alert-triangle")
 				.setTooltip(noteSet?.validationErrors.join(";\n"));
+			});
+		}
+
+		if (staleReasons.length > 0) {
+			section.addExtraButton((cb) => {
+				cb.setIcon("history")
+					.setTooltip(`Queue may be stale:\n${staleReasons.join(";\n")}`);
 			});
 		}
 
@@ -212,16 +249,18 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				});
 		});
 
-		// TODO: confirmation window
 		section.addExtraButton((cb) => {
 			cb.setIcon("rotate-cw")
 				.setTooltip("reset review queue for this note set")
 				.onClick(() => {
-					this.runAsync(async () => {
-						await this._plugin.noteSetService.validateRulesAndSave(noteSet);
-						await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
-						await this.renderView();
-					});
+					new NoteSetResetModal(this.app, noteSet, () => {
+						this.runAsync(async () => {
+							await this._plugin.noteSetService.validateRulesAndSave(noteSet);
+							await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
+							await this._plugin.bottomBar.render();
+							await this.renderView();
+						});
+					}).open();
 				});
 		});
 
@@ -239,6 +278,66 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 		});
 
 		return section.settingEl;
+	}
+
+	private async getCurrentFileActionsDescription(): Promise<string> {
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!(activeFile instanceof TFile)) {
+			return "current file actions: no active note";
+		}
+
+		const queueText = this.getActiveFileQueueText(activeFile);
+		try {
+			const reviewedValue = await this._plugin.fileService.getReviewedValue(activeFile);
+			const reviewFrequency = await this._plugin.fileService.getReviewFrequency(activeFile);
+			return `current file: reviewed ${this.getMetadataDisplayValue(reviewedValue)} | frequency ${reviewFrequency ?? ReviewFrequency.normal} | ${queueText}`;
+		} catch (_error) {
+			return `current file: ${queueText}`;
+		}
+	}
+
+	private getActiveFileQueueText(activeFile: TFile): string {
+		const currentNoteSet = this.getCurrentNoteSetOrNull();
+		if (!currentNoteSet) {
+			return "no current note set";
+		}
+
+		return currentNoteSet.queue?.filenames?.includes(activeFile.path)
+			? "in current queue"
+			: "not in current queue";
+	}
+
+	private getCurrentNoteSetOrNull(): INoteSet | null {
+		try {
+			return this._plugin.noteSetService.getNoteSet(this._plugin.settings.currentNoteSetId);
+		} catch (_error) {
+			return null;
+		}
+	}
+
+	private getMetadataDisplayValue(value: unknown): string {
+		if (value === null || value === undefined || value === "") {
+			return "never";
+		}
+
+		if (value instanceof Date) {
+			return value.toISOString().slice(0, 10);
+		}
+
+		if (this.hasToISODate(value)) {
+			return value.toISODate();
+		}
+
+		return String(value);
+	}
+
+	private hasToISODate(value: unknown): value is { toISODate(): string } {
+		return (
+			typeof value === "object" &&
+			value !== null &&
+			"toISODate" in value &&
+			typeof (value as { toISODate?: unknown }).toISODate === "function"
+		);
 	}
 
 	getViewType(): string {
@@ -276,6 +375,7 @@ export class SimpleNoteReviewSidebarView extends ItemView {
 				`Set current note set to ${noteSet.displayName}.`
 			);
 		}
+		await this._plugin.bottomBar.render();
 		await this._plugin.activateView();
 	}
 

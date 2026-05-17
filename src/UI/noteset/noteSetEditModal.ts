@@ -126,6 +126,16 @@ export class NoteSetEditModal extends Modal {
             });
         });
 
+        const previewResultEl = contentEl.createDiv({cls: ["simple-note-review-preview", "simple-note-review-muted"]});
+        const previewBtn = new ButtonComponent(contentEl);
+        previewBtn.setButtonText("Preview Matches");
+        previewBtn.onClick(() => {
+            void this.previewMatches(previewResultEl).catch((error) => {
+                this._plugin.showNotice(this.getErrorMessage(error));
+                console.error(error);
+            });
+        });
+
         const saveBtn = new ButtonComponent(contentEl);
         saveBtn.setButtonText("Save");
         saveBtn.onClick(() => {
@@ -171,6 +181,13 @@ export class NoteSetEditModal extends Modal {
     private parseOptionalNumber(value: string): number | undefined {
         const parsedValue = parseInt(value, 10);
         return Number.isNaN(parsedValue) ? undefined : parsedValue;
+    }
+
+    private async previewMatches(previewResultEl: HTMLElement): Promise<void> {
+        previewResultEl.setText("Checking matches...");
+        const previewNoteSet = this._plugin.noteSetService.normalizeNoteSet(this._noteSet);
+        const matchCount = await this._plugin.noteSetService.getMatchingNoteCount(previewNoteSet);
+        previewResultEl.setText(`${matchCount} matching note${matchCount === 1 ? "" : "s"}.`);
     }
 
     private getErrorMessage(error: unknown): string {
