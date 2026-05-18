@@ -30,21 +30,27 @@ export class SelectNoteSetModal extends SuggestModal<INoteSet> {
 
     renderSuggestion(noteSet: INoteSet, el: HTMLElement) {
         el.createDiv({text: noteSet.displayName});
-        el.createEl("small", {text: noteSet.description}).style.opacity = "60%";
+        el.createEl("small", {
+            text: noteSet.description,
+            cls: "simple-note-review-muted",
+        });
     }
 
-    async onChooseSuggestion(noteSet: INoteSet, evt: MouseEvent | KeyboardEvent) {
+    async onChooseSuggestion(noteSet: INoteSet, _evt: MouseEvent | KeyboardEvent) {
+        const previousNoteSetId = this._plugin.settings.currentNoteSetId;
         try {
-            await this._plugin.reviewService.startReview(noteSet.id);
-            this._plugin.settings.currentNoteSetId = noteSet.id;
-            this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
-            this._plugin.saveSettings();
+            await this._plugin.startReview(noteSet.id);
+            if (previousNoteSetId !== noteSet.id) {
+                this._plugin.showNotice(`Set current note set to ${noteSet.displayName}.`);
+            }
         }         
         catch (error) {
 			if (error instanceof NoteSetEmptyError) {
 				this._plugin.showNotice(`note set ${noteSet.displayName ?? noteSet.name} is empty.`)
-			} 
-            throw error;
+                return;
+			}
+            this._plugin.showNotice(error instanceof Error ? error.message : String(error));
+            console.error(error);
 		} 
     }  
 

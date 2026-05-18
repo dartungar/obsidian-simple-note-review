@@ -1,25 +1,57 @@
 import SimpleNoteReviewPlugin from "main";
 import { ReviewFrequency } from "./reviewFrequency";
 import { getNumberOfDaysFromToday } from "src/utils/dateUtils";
+import { DataviewPage } from "src/dataview/dataviewFacade";
+
+const REVIEW_FREQUENCIES_BY_VALUE: Record<string, ReviewFrequency> = {
+    [ReviewFrequency.high]: ReviewFrequency.high,
+    [ReviewFrequency.normal]: ReviewFrequency.normal,
+    [ReviewFrequency.low]: ReviewFrequency.low,
+    [ReviewFrequency.ignore]: ReviewFrequency.ignore,
+};
+
+export function getReviewFrequencyFromMetadataValue(value: unknown): ReviewFrequency | null {
+    if (!hasReviewFrequencyMetadataValue(value) || typeof value !== "string") {
+        return null;
+    }
+
+    return REVIEW_FREQUENCIES_BY_VALUE[value] ?? null;
+}
+
+function requireReviewFrequencyFromMetadataValue(value: unknown): ReviewFrequency | null {
+    if (!hasReviewFrequencyMetadataValue(value)) {
+        return null;
+    }
+
+    const reviewFrequency = getReviewFrequencyFromMetadataValue(value);
+    if (!reviewFrequency) {
+        throw new Error("Review Frequency error!");
+    }
+
+    return reviewFrequency;
+}
+
+function hasReviewFrequencyMetadataValue(value: unknown): boolean {
+    return value !== null && value !== undefined && value !== "";
+}
 
 /** Calculate Note review priority score. (days elapsed from last review * (review frequency rank ** 2))
  * @param  {SimpleNoteReviewPlugin} plugin
- * @param  {Record<string, any>} note
+ * @param  {DataviewPage} note
  * @returns number
  */
-export function calculateNoteReviewPriority(plugin: SimpleNoteReviewPlugin, note: Record<string, any>): number {
+export function calculateNoteReviewPriority(plugin: SimpleNoteReviewPlugin, note: DataviewPage): number {
     const reviewedFieldName = plugin.settings.reviewedFieldName;
     const frequencyFieldName = plugin.settings.reviewFrequencyFieldName;
+    const reviewFrequency = requireReviewFrequencyFromMetadataValue(note[frequencyFieldName]);
 
     let score = 0;
 
-    switch (note[frequencyFieldName]) {
+    switch (reviewFrequency) {
         case ReviewFrequency.high:
             score = 5;
             break;
         case null:
-        case "":
-        case undefined:
             score = 4;
             break;
         case ReviewFrequency.normal:
@@ -37,10 +69,12 @@ export function calculateNoteReviewPriority(plugin: SimpleNoteReviewPlugin, note
 
     let multiplier = 1;
 
-    if (note[reviewedFieldName] == null || note[reviewedFieldName] == "" || note[reviewedFieldName] == undefined) 
+    const reviewedValue = note[reviewedFieldName];
+
+    if (reviewedValue == null || reviewedValue == "")
         multiplier = plugin.settings.unreviewedNotesFirst ? 10000 : 300;
-    else 
-        multiplier = getNumberOfDaysFromToday(note[reviewedFieldName]);
+    else
+        multiplier = getNumberOfDaysFromToday(String(reviewedValue));
 
     return (score ** 2)  * multiplier;
 }
