@@ -1,6 +1,7 @@
 import SimpleNoteReviewPlugin from "main";
 import { ButtonComponent, Modal, Setting } from "obsidian";
 import { INoteSet } from "src/noteSet/INoteSet";
+import { IFrontmatterPropertyFilter } from "src/noteSet/IFrontmatterPropertyFilter";
 import { JoinLogicOperators } from "src/settings/joinLogicOperators";
 
 
@@ -22,7 +23,7 @@ export class NoteSetEditModal extends Modal {
 
         const nameSetting = new Setting(contentEl);
         nameSetting.setName("Name");
-        nameSetting.setDesc("If omitted, the name will be created from tags, folders, or dataviewJS query (if these are set).")
+        nameSetting.setDesc("If omitted, the name will be created from tags, folders, properties, or dataviewJS query (if these are set).")
         nameSetting.addText(textField => {
             textField.setValue(this._noteSet.name)
             .setPlaceholder(this._noteSet.displayName)
@@ -56,6 +57,17 @@ export class NoteSetEditModal extends Modal {
             .setPlaceholder("Folders")
             .onChange(value => {
                 this._noteSet.folders = value != "" ? value.split(',').map(f => f.trim()) : [];
+            });
+        });
+
+        const propertiesSetting = new Setting(contentEl);
+        propertiesSetting.setName("Frontmatter properties");
+        propertiesSetting.setDesc(`One or more name:value pairs, separated by comma. Note set will contain notes with ${this._noteSet.frontmatterPropertiesJoinType === JoinLogicOperators.AND ? "all" : "any"} of these frontmatter properties. Leave out the value to match any note where the property is set. Example: status:active, priority`)
+        propertiesSetting.addTextArea(textArea => {
+            textArea.setValue(this._noteSet.frontmatterProperties ? this._noteSet.frontmatterProperties.map(p => p.value ? `${p.name}:${p.value}` : p.name).join(",") : "")
+            .setPlaceholder("Properties")
+            .onChange(value => {
+                this._noteSet.frontmatterProperties = value != "" ? this.parsePropertyFilters(value) : [];
             });
         });
 
@@ -104,19 +116,31 @@ export class NoteSetEditModal extends Modal {
             } )
         });
 
-        const folderTagJoinTypeSetting = new Setting(advancedSectionBodyEl);
-        folderTagJoinTypeSetting.setName("If folders *and* tags are specified, match notes with: ")
-        folderTagJoinTypeSetting.addDropdown(dropdown => {
-            dropdown.addOption(JoinLogicOperators.OR, "specified tags OR in these folders").addOption(JoinLogicOperators.AND, "specified tags AND in these folders")
-            .setValue(this._noteSet.foldersToTagsJoinType as string || JoinLogicOperators.OR)
+        const propertiesJoinTypeSetting = new Setting(advancedSectionBodyEl);
+        propertiesJoinTypeSetting.setName("If properties are specified, match notes with:")
+        propertiesJoinTypeSetting.addDropdown(dropdown => {
+            dropdown
+            .addOption(JoinLogicOperators.OR, "any of the properties")
+            .addOption(JoinLogicOperators.AND, "all of the properties")
+            .setValue(this._noteSet.frontmatterPropertiesJoinType as string || JoinLogicOperators.OR)
             .onChange((value: JoinLogicOperators) => {
-                this._noteSet.foldersToTagsJoinType = value; 
+                this._noteSet.frontmatterPropertiesJoinType = value;
+            } )
+        });
+
+        const criteriaJoinTypeSetting = new Setting(advancedSectionBodyEl);
+        criteriaJoinTypeSetting.setName("If more than one of tags, folders, and properties are specified, match notes that satisfy:")
+        criteriaJoinTypeSetting.addDropdown(dropdown => {
+            dropdown.addOption(JoinLogicOperators.OR, "any of them").addOption(JoinLogicOperators.AND, "all of them")
+            .setValue(this._noteSet.criteriaJoinType as string || JoinLogicOperators.OR)
+            .onChange((value: JoinLogicOperators) => {
+                this._noteSet.criteriaJoinType = value;
             })
         });
 
         const dataviewQuerySetting = new Setting(advancedSectionBodyEl);
         dataviewQuerySetting.setName("DataviewJS query");
-        dataviewQuerySetting.setDesc(`DataviewJS-style query for more flexible control over the note set. If used, *overrides* Tags & Folders. Example: "(#knowledge and #review) or ('./notes')"`);
+        dataviewQuerySetting.setDesc(`DataviewJS-style query for more flexible control over the note set. If used, *overrides* Tags, Folders & Properties. Example: "(#knowledge and #review) or ('./notes')"`);
         dataviewQuerySetting.addTextArea(textArea => {
             textArea.setValue(this._noteSet.dataviewQuery)
             .setPlaceholder("DataviewJS query")
@@ -151,8 +175,10 @@ export class NoteSetEditModal extends Modal {
             const disableTagsFoldersSettings = Boolean(dataviewJsQueryValue);
             tagsSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
             foldersSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
+            propertiesSetting.settingEl.classList.toggle("simple-note-review-setting-muted", disableTagsFoldersSettings);
             tagsSetting.setDisabled(disableTagsFoldersSettings);
             foldersSetting.setDisabled(disableTagsFoldersSettings);
+            propertiesSetting.setDisabled(disableTagsFoldersSettings);
         }
 
         updateTagsFoldersSettingsAvailability(this._noteSet.dataviewQuery);
@@ -181,6 +207,15 @@ export class NoteSetEditModal extends Modal {
     private parseOptionalNumber(value: string): number | undefined {
         const parsedValue = parseInt(value, 10);
         return Number.isNaN(parsedValue) ? undefined : parsedValue;
+    }
+
+    private parsePropertyFilters(value: string): IFrontmatterPropertyFilter[] {
+        return value.split(',').map(pair => {
+            const separatorIndex = pair.indexOf(':');
+            const name = separatorIndex === -1 ? pair : pair.slice(0, separatorIndex);
+            const propertyValue = separatorIndex === -1 ? "" : pair.slice(separatorIndex + 1);
+            return { name: name.trim(), value: propertyValue.trim() };
+        }).filter(filter => filter.name.length > 0);
     }
 
     private async previewMatches(previewResultEl: HTMLElement): Promise<void> {

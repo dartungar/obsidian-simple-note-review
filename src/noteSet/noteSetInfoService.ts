@@ -34,7 +34,13 @@ export class NoteSetInfoService {
             return noteSet.name;
         }
         const alias = this._dataviewService.getOrCreateBaseDataviewQuery(noteSet);
-        return alias && alias != "" ? alias : "blank note set";
+        if (alias && alias !== "") {
+            return alias;
+        }
+        if (noteSet.frontmatterProperties && noteSet.frontmatterProperties.length > 0) {
+            return this.getPropertiesText(noteSet);
+        }
+        return "blank note set";
     }
 
     private getNoteSetDescription(noteSet: INoteSet): string {
@@ -46,19 +52,25 @@ export class NoteSetInfoService {
         const desc: string[] = [];
 
         if (noteSet.dataviewQuery && noteSet.dataviewQuery !== "") {
-            desc.push(`are matched with dataviewJS query ${noteSet.dataviewQuery}; `);
-        }
+            desc.push(`are matched with dataviewJS query ${noteSet.dataviewQuery}`);
+        } else {
+            const groupDescriptions: string[] = [];
 
-        if (noteSet.tags && noteSet.tags?.length > 0) {
-            let tagString = `contain ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${noteSet.tags.join(", ")}`;
-            if (noteSet.folders && noteSet.folders?.length > 0) {
-                tagString += ` ${noteSet.foldersToTagsJoinType === JoinLogicOperators.AND ? "and" : "or"} `;
-            } 
-            desc.push(tagString);
-        }
+            if (noteSet.tags && noteSet.tags.length > 0) {
+                groupDescriptions.push(`contain ${noteSet.tagsJoinType === JoinLogicOperators.AND ? "all" : "any"} of these tags: ${noteSet.tags.join(", ")}`);
+            }
 
-        if (noteSet.folders && noteSet.folders?.length > 0) {
-            desc.push(`are inside any of these folders (including nested folders): ${noteSet.folders.join(", ")}`);
+            if (noteSet.folders && noteSet.folders.length > 0) {
+                groupDescriptions.push(`are inside any of these folders (including nested folders): ${noteSet.folders.join(", ")}`);
+            }
+
+            if (noteSet.frontmatterProperties && noteSet.frontmatterProperties.length > 0) {
+                groupDescriptions.push(`have ${noteSet.frontmatterPropertiesJoinType === JoinLogicOperators.AND ? "all" : "any"} of these frontmatter properties: ${this.getPropertiesText(noteSet)}`);
+            }
+
+            if (groupDescriptions.length > 0) {
+                desc.push(groupDescriptions.join(noteSet.criteriaJoinType === JoinLogicOperators.AND ? "; and " : "; or "));
+            }
         }
 
         if (noteSet.createdInLastNDays) {
@@ -72,8 +84,15 @@ export class NoteSetInfoService {
         return `matches notes that:  ` + desc.join("; ");
     }
 
+    private getPropertiesText(noteSet: INoteSet): string {
+        return noteSet.frontmatterProperties
+            .map(p => p.value ? `${p.name}: ${p.value}` : `${p.name} is set`)
+            .join(", ");
+    }
+
     private queryMatchesAllNotes(noteset: INoteSet): boolean {
-        return !(this._dataviewService.getOrCreateBaseDataviewQuery(noteset) || noteset.createdInLastNDays || noteset.modifiedInLastNDays);
+        const hasProperties = noteset.frontmatterProperties && noteset.frontmatterProperties.length > 0;
+        return !(this._dataviewService.getOrCreateBaseDataviewQuery(noteset) || noteset.createdInLastNDays || noteset.modifiedInLastNDays || hasProperties);
     }
 
     private getDateValue(value: unknown): Date | null {

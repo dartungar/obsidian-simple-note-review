@@ -4,6 +4,7 @@ import SimpleNoteReviewPlugin from "main";
 import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService } from "./noteSetInfoService";
 import { NotesetValidationErrors } from "./notesetValidationErrors";
+import { IFrontmatterPropertyFilter } from "./IFrontmatterPropertyFilter";
 
 export class NoteSetEmptyError extends Error {
 	message =
@@ -85,7 +86,9 @@ export class NoteSetService {
 			tags: this.normalizeStringArray(noteSet.tags),
 			tagsJoinType: noteSet.tagsJoinType ?? defaults.tagsJoinType,
 			folders: this.normalizeStringArray(noteSet.folders),
-			foldersToTagsJoinType: noteSet.foldersToTagsJoinType ?? defaults.foldersToTagsJoinType,
+			frontmatterProperties: this.normalizeFrontmatterProperties(noteSet.frontmatterProperties),
+			frontmatterPropertiesJoinType: noteSet.frontmatterPropertiesJoinType ?? defaults.frontmatterPropertiesJoinType,
+			criteriaJoinType: noteSet.criteriaJoinType ?? defaults.criteriaJoinType,
 			createdInLastNDays: this.normalizeOptionalNumber(noteSet.createdInLastNDays),
 			modifiedInLastNDays: this.normalizeOptionalNumber(noteSet.modifiedInLastNDays),
 			dataviewQuery: noteSet.dataviewQuery ?? defaults.dataviewQuery,
@@ -113,7 +116,9 @@ export class NoteSetService {
 			tags: normalized.tags,
 			tagsJoinType: normalized.tagsJoinType,
 			folders: normalized.folders,
-			foldersToTagsJoinType: normalized.foldersToTagsJoinType,
+			frontmatterProperties: normalized.frontmatterProperties,
+			frontmatterPropertiesJoinType: normalized.frontmatterPropertiesJoinType,
+			criteriaJoinType: normalized.criteriaJoinType,
 			createdInLastNDays: normalized.createdInLastNDays,
 			modifiedInLastNDays: normalized.modifiedInLastNDays,
 			dataviewQuery: normalized.dataviewQuery,
@@ -336,5 +341,16 @@ export class NoteSetService {
 
 	private normalizeOptionalNumber(value: number | undefined): number | undefined {
 		return Number.isFinite(value) ? value : undefined;
+	}
+
+	private normalizeFrontmatterProperties(value: IFrontmatterPropertyFilter[]): IFrontmatterPropertyFilter[] {
+		if (!Array.isArray(value)) {
+			return [];
+		}
+
+		return value
+			.filter((item) => item && typeof item.name === "string")
+			.map((item) => ({ name: item.name.trim(), value: typeof item.value === "string" ? item.value.trim() : "" }))
+			.filter((item) => item.name.length > 0);
 	}
 }

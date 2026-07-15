@@ -2,6 +2,8 @@ import { DataArray } from "obsidian-dataview";
 import { DataviewFacade, DataviewNotInstalledError, DataviewPage } from "src/dataview/dataviewFacade";
 import { getDateOffsetByNDays } from "src/utils/dateUtils";
 import { INoteSet } from "../noteSet/INoteSet";
+import { IFrontmatterPropertyFilter } from "../noteSet/IFrontmatterPropertyFilter";
+import { JoinLogicOperators } from "../settings/joinLogicOperators";
 import { DataviewQueryError } from "../noteSet/noteSetService";
 
 
@@ -17,11 +19,17 @@ export class DataviewService {
     }
 
     public async getNoteSetFiles(noteSet: INoteSet): Promise<DataArray<DataviewPage>> {
-        const query = this.getOrCreateBaseDataviewQuery(noteSet);
+        const hasCustomQuery = Boolean(noteSet.dataviewQuery && noteSet.dataviewQuery !== "");
+        const hasProperties = Boolean(noteSet.frontmatterProperties && noteSet.frontmatterProperties.length > 0);
+        const filterCriteriaInMemory = hasProperties && !hasCustomQuery;
+        const query = filterCriteriaInMemory ? undefined : this.getOrCreateBaseDataviewQuery(noteSet);
         try {
             let pages = await this._dataviewApi.pages(query);
+            if (filterCriteriaInMemory) {
+                pages = pages.where(p => this.matchesCriteriaGroups(p, noteSet));
+            }
             if (noteSet.createdInLastNDays) {
-                pages = pages.where(p => p.file.cday > getDateOffsetByNDays(noteSet.createdInLastNDays)); 
+                pages = pages.where(p => p.file.cday > getDateOffsetByNDays(noteSet.createdInLastNDays));
             }
             if (noteSet.modifiedInLastNDays) {
                 pages = pages.where(p => p.file.mday > getDateOffsetByNDays(noteSet.modifiedInLastNDays));
@@ -38,9 +46,9 @@ export class DataviewService {
     }
 
     public getOrCreateBaseDataviewQuery(noteSet: INoteSet): string | undefined {
-        if (noteSet.dataviewQuery && noteSet.dataviewQuery != "") 
+        if (noteSet.dataviewQuery && noteSet.dataviewQuery != "")
             return noteSet.dataviewQuery;
-        
+
         let tags = "";
         let folders = "";
         if (noteSet.tags) {
@@ -54,7 +62,7 @@ export class DataviewService {
             folders = noteSet.folders.join(" or ");
         }
 
-        if (tags && folders) return `(${tags}) ${noteSet.foldersToTagsJoinType || "or"} (${folders})`;
+        if (tags && folders) return `(${tags}) ${noteSet.criteriaJoinType || "or"} (${folders})`;
 
         if (tags) return tags;
 
@@ -75,5 +83,85 @@ export class DataviewService {
         return await this._dataviewApi.getMetadataFieldValue(filepath, fieldName);
     }
 
-    
+    private matchesCriteriaGroups(page: DataviewPage, noteSet: INoteSet): boolean {
+        const groupResults: boolean[] = [];
+
+        if (noteSet.tags && noteSet.tags.length > 0) {
+            groupResults.push(this.matchesTags(page, noteSet.tags, noteSet.tagsJoinType));
+        }
+
+        if (noteSet.folders && noteSet.folders.length > 0) {
+            groupResults.push(this.matchesFolders(page, noteSet.folders));
+        }
+
+        if (noteSet.frontmatterProperties && noteSet.frontmatterProperties.length > 0) {
+            groupResults.push(this.matchesProperties(page, noteSet.frontmatterProperties, noteSet.frontmatterPropertiesJoinType));
+        }
+
+        if (groupResults.length === 0) {
+            return true;
+        }
+
+        return noteSet.criteriaJoinType === JoinLogicOperators.AND
+            ? groupResults.every(Boolean)
+            : groupResults.some(Boolean);
+    }
+
+    private matchesTags(page: DataviewPage, tags: string[], joinType: JoinLogicOperators): boolean {
+        const pageTags = page.file?.tags ? Array.from(page.file.tags) : [];
+        const normalizedTags = tags.map(t => t[0] !== "#" ? "#" + t : t);
+        const matchesTag = (tag: string) => pageTags.some(pt => pt === tag || pt.startsWith(`${tag}/`));
+        return joinType === JoinLogicOperators.AND
+            ? normalizedTags.every(matchesTag)
+            : normalizedTags.some(matchesTag);
+    }
+
+    private matchesFolders(page: DataviewPage, folders: string[]): boolean {
+        const path = page.file?.path ?? "";
+        return folders.some(folder => path === folder || path.startsWith(`${folder}/`));
+    }
+
+    private matchesProperties(page: DataviewPage, properties: IFrontmatterPropertyFilter[], joinType: JoinLogicOperators): boolean {
+        const matchesProperty = (filter: IFrontmatterPropertyFilter) =>
+            this.matchesFrontmatterProperty(page[filter.name], filter.value ? [filter.value] : [], JoinLogicOperators.OR);
+        return joinType === JoinLogicOperators.AND
+            ? properties.every(matchesProperty)
+            : properties.some(matchesProperty);
+    }
+
+    private matchesFrontmatterProperty(actualValue: unknown, allowedValues: string[], joinType: JoinLogicOperators): boolean {
+        const actualValues = this.normalizePropertyValueToStrings(actualValue);
+        if (!allowedValues || allowedValues.length === 0) {
+            return actualValues.length > 0;
+        }
+
+        const matchesValue = (allowed: string) => actualValues.some(v => v.toLowerCase() === allowed.toLowerCase());
+        return joinType === JoinLogicOperators.AND
+            ? allowedValues.every(matchesValue)
+            : allowedValues.some(matchesValue);
+    }
+
+    private normalizePropertyValueToStrings(value: unknown): string[] {
+        if (value === null || value === undefined) {
+            return [];
+        }
+
+        if (Array.isArray(value)) {
+            return value.flatMap(v => this.normalizePropertyValueToStrings(v));
+        }
+
+        if (value instanceof Date) {
+            return [value.toISOString()];
+        }
+
+        if (this.isDataviewLink(value)) {
+            return [value.path];
+        }
+
+        return [String(value)];
+    }
+
+    private isDataviewLink(value: unknown): value is { path: string } {
+        return typeof value === "object" && value !== null && "path" in value;
+    }
 }

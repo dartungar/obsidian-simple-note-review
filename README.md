@@ -12,8 +12,8 @@ This is a plugin for people who want to review, resurface, and rediscover their 
 The philosophy is: "define a set of notes and review them at your own pace". 
 
 ## How does it work?
-#### Define a note set based on tags, folders, or a dataviewJS query.
-Simple Note Review can create a noteset with a flexible set of rules: tags and/or folders, creation date, or even a dataviewJS query.
+#### Define a note set based on tags, folders, frontmatter properties, or a dataviewJS query.
+Simple Note Review can create a noteset with a flexible set of rules: tags, folders, and/or frontmatter properties, creation date, or even a dataviewJS query.
 A note can be in any number of note sets.
 
 ![image](https://github.com/dartungar/obsidian-simple-note-review/assets/36126057/60c9501c-aa4c-4d09-bd77-4ebf2dd9bb0b)
