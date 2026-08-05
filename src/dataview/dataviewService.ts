@@ -108,8 +108,8 @@ export class DataviewService {
     }
 
     private matchesTags(page: DataviewPage, tags: string[], joinType: JoinLogicOperators): boolean {
-        const pageTags = page.file?.tags ? Array.from(page.file.tags) : [];
-        const normalizedTags = tags.map(t => t[0] !== "#" ? "#" + t : t);
+        const pageTags = page.file?.tags ? Array.from(page.file.tags, tag => tag.toLowerCase()) : [];
+        const normalizedTags = tags.map(tag => (tag[0] !== "#" ? "#" + tag : tag).toLowerCase());
         const matchesTag = (tag: string) => pageTags.some(pt => pt === tag || pt.startsWith(`${tag}/`));
         return joinType === JoinLogicOperators.AND
             ? normalizedTags.every(matchesTag)
@@ -118,12 +118,24 @@ export class DataviewService {
 
     private matchesFolders(page: DataviewPage, folders: string[]): boolean {
         const path = page.file?.path ?? "";
-        return folders.some(folder => path === folder || path.startsWith(`${folder}/`));
+        return folders.some(folder => {
+            const normalizedFolder = this.normalizeFolderSource(folder);
+            return normalizedFolder.length > 0
+                && (path === normalizedFolder || path.startsWith(`${normalizedFolder}/`));
+        });
     }
 
     private matchesProperties(page: DataviewPage, properties: IFrontmatterPropertyFilter[], joinType: JoinLogicOperators): boolean {
-        const matchesProperty = (filter: IFrontmatterPropertyFilter) =>
-            this.matchesFrontmatterProperty(page[filter.name], filter.value ? [filter.value] : [], JoinLogicOperators.OR);
+        const matchesProperty = (filter: IFrontmatterPropertyFilter) => {
+            const propertyKey = this.findPropertyKey(page, filter.name);
+            if (propertyKey === undefined) {
+                return false;
+            }
+            if (!filter.value) {
+                return true;
+            }
+            return this.matchesFrontmatterProperty(page[propertyKey], [filter.value], JoinLogicOperators.OR);
+        };
         return joinType === JoinLogicOperators.AND
             ? properties.every(matchesProperty)
             : properties.some(matchesProperty);
@@ -151,7 +163,16 @@ export class DataviewService {
         }
 
         if (value instanceof Date) {
-            return [value.toISOString()];
+            if (Number.isNaN(value.getTime())) {
+                return [];
+            }
+            const isoDateTime = value.toISOString();
+            return [isoDateTime, isoDateTime.slice(0, 10)];
+        }
+
+        if (this.isDataviewDate(value)) {
+            return [value.toISO(), value.toISODate()]
+                .filter((dateValue): dateValue is string => typeof dateValue === "string" && dateValue.length > 0);
         }
 
         if (this.isDataviewLink(value)) {
@@ -163,5 +184,34 @@ export class DataviewService {
 
     private isDataviewLink(value: unknown): value is { path: string } {
         return typeof value === "object" && value !== null && "path" in value;
+    }
+
+    private isDataviewDate(value: unknown): value is { toISO(): string | null; toISODate(): string | null } {
+        return typeof value === "object"
+            && value !== null
+            && "toISO" in value
+            && typeof (value as { toISO?: unknown }).toISO === "function"
+            && "toISODate" in value
+            && typeof (value as { toISODate?: unknown }).toISODate === "function";
+    }
+
+    private findPropertyKey(page: DataviewPage, propertyName: string): string | undefined {
+        if (Object.prototype.hasOwnProperty.call(page, propertyName)) {
+            return propertyName;
+        }
+
+        const normalizedPropertyName = propertyName.toLowerCase();
+        return Object.keys(page).find(key => key.toLowerCase() === normalizedPropertyName);
+    }
+
+    private normalizeFolderSource(folder: string): string {
+        let normalizedFolder = folder.trim();
+        const isDoubleQuoted = normalizedFolder.startsWith('"') && normalizedFolder.endsWith('"');
+        const isSingleQuoted = normalizedFolder.startsWith("'") && normalizedFolder.endsWith("'");
+        if (isDoubleQuoted || isSingleQuoted) {
+            normalizedFolder = normalizedFolder.slice(1, -1);
+        }
+
+        return normalizedFolder.replace(/^\.\//, "").replace(/^\/+|\/+$/g, "");
     }
 }

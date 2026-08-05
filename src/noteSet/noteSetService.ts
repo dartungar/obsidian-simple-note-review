@@ -5,6 +5,11 @@ import { DataviewService } from "../dataview/dataviewService";
 import { NoteSetInfoService } from "./noteSetInfoService";
 import { NotesetValidationErrors } from "./notesetValidationErrors";
 import { IFrontmatterPropertyFilter } from "./IFrontmatterPropertyFilter";
+import { JoinLogicOperators } from "../settings/joinLogicOperators";
+
+type LegacyNoteSet = Partial<INoteSet> & {
+	foldersToTagsJoinType?: JoinLogicOperators;
+};
 
 export class NoteSetEmptyError extends Error {
 	message =
@@ -68,16 +73,17 @@ export class NoteSetService {
 		return (noteSets ?? []).map((noteSet) => this.normalizeNoteSet(noteSet));
 	}
 
-	public normalizeNoteSet(noteSet: Partial<INoteSet>): INoteSet {
+	public normalizeNoteSet(noteSet: LegacyNoteSet): INoteSet {
 		const defaults = new EmptyNoteSet();
 		const stats = noteSet.stats ?? defaults.stats;
 		const queue = noteSet.queue ?? defaults.queue;
 		const filenames = this.normalizeStringArray(queue.filenames);
 		const sourceFileCount = this.normalizeOptionalNumber(queue.sourceFileCount);
+		const { foldersToTagsJoinType, ...noteSetWithoutLegacyFields } = noteSet;
 
 		return {
 			...defaults,
-			...noteSet,
+			...noteSetWithoutLegacyFields,
 			id: noteSet.id || defaults.id,
 			sortOrder: noteSet.sortOrder,
 			name: noteSet.name ?? defaults.name,
@@ -88,7 +94,7 @@ export class NoteSetService {
 			folders: this.normalizeStringArray(noteSet.folders),
 			frontmatterProperties: this.normalizeFrontmatterProperties(noteSet.frontmatterProperties),
 			frontmatterPropertiesJoinType: noteSet.frontmatterPropertiesJoinType ?? defaults.frontmatterPropertiesJoinType,
-			criteriaJoinType: noteSet.criteriaJoinType ?? defaults.criteriaJoinType,
+			criteriaJoinType: noteSet.criteriaJoinType ?? foldersToTagsJoinType ?? defaults.criteriaJoinType,
 			createdInLastNDays: this.normalizeOptionalNumber(noteSet.createdInLastNDays),
 			modifiedInLastNDays: this.normalizeOptionalNumber(noteSet.modifiedInLastNDays),
 			dataviewQuery: noteSet.dataviewQuery ?? defaults.dataviewQuery,
