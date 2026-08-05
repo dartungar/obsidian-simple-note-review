@@ -2,8 +2,9 @@ import { INoteQueue } from "src/queues/noteQueue"
 import { JoinLogicOperators } from "../settings/joinLogicOperators"
 import { INoteSetStats } from "./INoteSetStats"
 import { NotesetValidationErrors } from "./notesetValidationErrors"
+import { IFrontmatterPropertyFilter } from "./IFrontmatterPropertyFilter"
 
-// TODO: excluded tags, folders, frontmatter keys
+// TODO: excluded tags, folders
 export interface INoteSet {
     id: string
     sortOrder: number | undefined
@@ -13,7 +14,9 @@ export interface INoteSet {
     tags: string[]
     tagsJoinType: JoinLogicOperators
     folders: string[]
-    foldersToTagsJoinType: JoinLogicOperators
+    frontmatterProperties: IFrontmatterPropertyFilter[]
+    frontmatterPropertiesJoinType: JoinLogicOperators
+    criteriaJoinType: JoinLogicOperators
     createdInLastNDays: number | undefined
     modifiedInLastNDays: number | undefined
     dataviewQuery: string
@@ -31,7 +34,9 @@ export class EmptyNoteSet implements INoteSet {
     tags: string[] = []
     tagsJoinType = JoinLogicOperators.OR
     folders: string[] = []
-    foldersToTagsJoinType = JoinLogicOperators.OR
+    frontmatterProperties: IFrontmatterPropertyFilter[] = []
+    frontmatterPropertiesJoinType = JoinLogicOperators.OR
+    criteriaJoinType = JoinLogicOperators.OR
     createdInLastNDays: number | undefined = undefined
     modifiedInLastNDays: number | undefined = undefined
     dataviewQuery = ""

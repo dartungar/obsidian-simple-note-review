@@ -5,6 +5,7 @@ export interface DataviewPage {
         path: string;
         cday: Date;
         mday: Date;
+        tags: Set<string>;
     };
     reviewed?: string | Date | null;
     [field: string]: unknown;
