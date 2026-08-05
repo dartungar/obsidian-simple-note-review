@@ -176,6 +176,10 @@
 	background-color: var(--background-modifier-hover);
 }
 
+.simple-note-review-bottom-bar-warning-button {
+	color: var(--text-warning);
+}
+
 .simple-note-review-bottom-bar-button svg {
 	width: 1rem;
 	height: 1rem;

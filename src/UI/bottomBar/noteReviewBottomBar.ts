@@ -4,6 +4,7 @@ import type SimpleNoteReviewPlugin from "main";
 import { ReviewFrequency } from "src/noteSet/reviewFrequency";
 import { INoteSet } from "src/noteSet/INoteSet";
 import { NoteSetInfoModal } from "src/UI/noteset/noteSetInfoModal";
+import { NoteSetResetModal } from "src/UI/noteset/noteSetResetModal";
 
 export class NoteReviewBottomBar {
 	private rootEl: HTMLElement | null = null;
@@ -79,32 +80,31 @@ export class NoteReviewBottomBar {
 			cls: "simple-note-review-bottom-bar-actions",
 		});
 
+		if (currentNoteSet) {
+			const staleReasons = this._plugin.noteSetService.getQueueStaleReasons(currentNoteSet);
+			if (staleReasons.length > 0) {
+				const staleQueueButton = this.createIconButton(
+					actionsEl,
+					"history",
+					`Queue may be stale:\n${staleReasons.join(";\n")}\nClick to reset queue.`,
+					async () => {
+						await this.resetNoteSetQueue(currentNoteSet);
+					}
+				);
+				staleQueueButton.addClass("simple-note-review-bottom-bar-warning-button");
+			}
+		}
+
 		this.createIconButton(actionsEl, "info", "view note set info & stats", () => {
 			this.openCurrentNoteSetInfo();
+		});
+		this.createIconButton(actionsEl, "rotate-cw", "reset review queue", () => {
+			this.openCurrentNoteSetReset();
 		});
 		this.createDivider(actionsEl);
 
 		this.createIconButton(actionsEl, "play", "continue review", async () => {
 			await this.continueReview();
-		});
-		if (this._plugin.settings.bottomBarShowRandomButton) {
-			this.createIconButton(actionsEl, "dices", "open random note", async () => {
-				const noteSet = this.requireCurrentNoteSet();
-				if (!noteSet) {
-					return;
-				}
-				await this._plugin.reviewService.openRandomNoteInQueue(noteSet.id);
-			});
-		}
-		this.createIconButton(actionsEl, "skip-forward", "skip note", async () => {
-			const noteSet = this.requireCurrentNoteSet();
-			if (!noteSet) {
-				return;
-			}
-			await this._plugin.reviewService.skipNote(
-				this._app.workspace.getActiveFile(),
-				noteSet.id
-			);
 		});
 		this.createIconButton(actionsEl, "file-check", "mark note as reviewed", async () => {
 			const noteSet = this.requireCurrentNoteSet();
@@ -116,6 +116,25 @@ export class NoteReviewBottomBar {
 				noteSet.id
 			);
 		});
+		this.createIconButton(actionsEl, "skip-forward", "skip note", async () => {
+			const noteSet = this.requireCurrentNoteSet();
+			if (!noteSet) {
+				return;
+			}
+			await this._plugin.reviewService.skipNote(
+				this._app.workspace.getActiveFile(),
+				noteSet.id
+			);
+		});
+		if (this._plugin.settings.bottomBarShowRandomButton) {
+			this.createIconButton(actionsEl, "dices", "open random note", async () => {
+				const noteSet = this.requireCurrentNoteSet();
+				if (!noteSet) {
+					return;
+				}
+				await this._plugin.reviewService.openRandomNoteInQueue(noteSet.id);
+			});
+		}
 
 		this.createDivider(actionsEl);
 
@@ -302,6 +321,26 @@ export class NoteReviewBottomBar {
 			noteSet,
 			this._plugin.noteSetService
 		).open();
+	}
+
+	private openCurrentNoteSetReset(): void {
+		const noteSet = this.requireCurrentNoteSet();
+		if (!noteSet) {
+			return;
+		}
+
+		new NoteSetResetModal(this._app, noteSet, () => {
+			this.runAsync(async () => {
+				await this.resetNoteSetQueue(noteSet);
+				await this._plugin.refreshSidebarViews();
+				await this.render();
+			});
+		}).open();
+	}
+
+	private async resetNoteSetQueue(noteSet: INoteSet): Promise<void> {
+		await this._plugin.noteSetService.validateRulesAndSave(noteSet);
+		await this._plugin.reviewService.resetNotesetQueueWithValidation(noteSet.id);
 	}
 
 	private runAsync(action: () => Promise<void>): void {
